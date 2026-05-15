@@ -1,0 +1,14 @@
+{
+    "name": "compuqtech/lex360",
+    "description": "CRM Lex 360 - Módulo de Datos",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "LEX360\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "phpoffice/phpspreadsheet": "^5.7"
+    }
+}

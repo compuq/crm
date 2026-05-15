@@ -1,0 +1,14 @@
+CRM/
+├── composer.json
+├── config/
+│   ├── config.php
+│   └── database.php
+├── src/
+│   ├── core/
+│   │   ├── DaoInterface.php
+│   │   └── BaseDao.php
+│   └── models/
+│       └── dao/
+│           └── db/
+│               └── Pdo.php
+└── index.php
