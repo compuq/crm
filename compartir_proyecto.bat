@@ -1,9 +1,17 @@
-powershell -Command ^
-"Get-ChildItem -Recurse -File | Where-Object {
-    $_.FullName -notmatch '\\vendor\\|\\node_modules\\|\\.git\\'
-} | ForEach-Object {
-    Add-Content proyecto.txt ('`n==============================');
-    Add-Content proyecto.txt ('ARCHIVO: ' + $_.FullName);
-    Add-Content proyecto.txt '==============================';
-    Get-Content $_.FullName | Add-Content proyecto.txt
-}"
+@echo off
+cd /d C:\xampp\htdocs\crm
+
+echo =========================
+echo COMPARTIENDO PROYECTO
+echo =========================
+
+git add .
+git commit -m "Actualizacion del proyecto"
+git push origin main
+
+echo.
+echo =========================
+echo PROYECTO ACTUALIZADO
+echo =========================
+
+pause
