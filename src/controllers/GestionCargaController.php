@@ -6,6 +6,90 @@ use LEX360\Models\Services\GestionMasivaService;
 
 class GestionCargaController extends Controller
 {
+    public function importarTipologias(string $filePath, int $carteraId = null): array
+    {
+        $this->db->beginTransaction();
+        try {
+            // Leer CSV/XLSX
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+            $rows = $spreadsheet->getActiveSheet()->toArray();
+            
+            if (empty($rows) || count($rows) < 2) {
+                throw new \Exception("El archivo está vacío o no tiene datos.");
+            }
+
+            // Encabezados esperados
+            $headers = array_map('strtolower', array_map('trim', $rows[0]));
+            $required = ['clase', 'nombre'];
+            $missing = array_diff($required, $headers);
+            if (!empty($missing)) {
+                throw new \Exception("Faltan columnas obligatorias: " . implode(', ', $missing));
+            }
+
+            $insertados = 0;
+            $errores = [];
+            $stmt = $this->db->prepare("
+                INSERT INTO tipologias (
+                    clase, padre_id, nombre, codigo_origen, id_cartera,
+                    estatus_default, requiere_proxima_fecha, requiere_monto
+                ) VALUES (
+                    :clase, :padre_id, :nombre, :codigo_origen, :id_cartera,
+                    :estatus_default, :requiere_proxima_fecha, :requiere_monto
+                )
+                ON CONFLICT (codigo_origen, id_cartera) 
+                DO UPDATE SET 
+                    nombre = EXCLUDED.nombre,
+                    estatus_default = EXCLUDED.estatus_default,
+                    requiere_proxima_fecha = EXCLUDED.requiere_proxima_fecha,
+                    requiere_monto = EXCLUDED.requiere_monto
+            ");
+
+            foreach (array_slice($rows, 1) as $linea => $row) {
+                try {
+                    $data = array_combine($headers, array_map('trim', $row));
+                    
+                    // Validaciones básicas
+                    if (!in_array($data['clase'], ['T', 'S'])) {
+                        throw new \Exception("Clase inválida: debe ser 'T' o 'S'");
+                    }
+                    if (empty($data['nombre'])) {
+                        throw new \Exception("Nombre es obligatorio");
+                    }
+
+                    // Procesar valores opcionales con defaults
+                    $estatus = strtoupper($data['estatus_default'] ?? 'SINC');
+                    if (!in_array($estatus, ['SINC', 'COMP', 'PAGG', 'PAGO'])) {
+                        $estatus = 'SINC';
+                    }
+
+                    $reqFecha = filter_var($data['requiere_proxima_fecha'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+                    $reqMonto = filter_var($data['requiere_monto'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+
+                    $stmt->execute([
+                        'clase' => $data['clase'],
+                        'padre_id' => !empty($data['padre_id']) ? (int)$data['padre_id'] : null,
+                        'nombre' => substr($data['nombre'], 0, 100),
+                        'codigo_origen' => !empty($data['codigo_origen']) ? substr($data['codigo_origen'], 0, 20) : null,
+                        'id_cartera' => !empty($data['id_cartera']) ? (int)$data['id_cartera'] : $carteraId,
+                        'estatus_default' => $estatus,
+                        'requiere_proxima_fecha' => $reqFecha,
+                        'requiere_monto' => $reqMonto
+                    ]);
+
+                    $insertados++;
+                } catch (\Exception $e) {
+                    $errores[] = "Línea " . ($linea + 2) . ": " . $e->getMessage();
+                }
+            }
+
+            $this->db->commit();
+            return ['success' => true, 'insertados' => $insertados, 'errores' => $errores];
+
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'errores' => ["Error crítico: " . $e->getMessage()]];
+        }
+    }
     /**
      * Muestra el formulario de carga de gestiones (CSV)
      */

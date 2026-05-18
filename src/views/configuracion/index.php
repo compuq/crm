@@ -63,7 +63,13 @@
     <div class="tab-pane fade" id="tab-tipologias">
         <div class="card bg-dark border-secondary p-4 mb-4">
             <h6 class="text-info mb-2">📤 Carga Masiva de Tipologías por Cartera</h6>
-            <p class="text-secondary small mb-2">Formato CSV: <code>codigo_origen, clase (T/S), codigo_padre, nombre</code></p>
+            <p class="text-secondary small mb-2">
+                Formato XLSX: <code>codigo_origen, clase (T/S), codigo_padre, nombre, estatus_default, requiere_proxima_fecha, requiere_monto</code>
+            </p>
+            <ul class="text-secondary small ms-3 mb-2">
+                <li><strong>estatus_default:</strong> SINC, COMP, PAGG o PAGO</li>
+                <li><strong>requiere_proxima_fecha / requiere_monto:</strong> true o false</li>
+            </ul>
             <p class="text-warning small mb-3">⚠️ <strong>Importante:</strong> Si hay algún error en el archivo, toda la operación se cancelará (rollback).</p>
             
             <form id="form-tipologias" action="javascript:void(0);" onsubmit="return false;" enctype="multipart/form-data" class="row g-2">

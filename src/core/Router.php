@@ -14,8 +14,10 @@ class Router
         
         // Clientes & Gestión
         'clientes'          => 'ClienteController@listar',
-        'registrar_gestion' => 'GestionController@registrar',
+        'registrar_gestion' => 'GestionController@registrarGestion',
         'get_tipologias'    => 'GestionController@getTipologias',
+        'get_tipologias_config' => 'GestionController@getTipologiasConfig',
+        
         
         // Cargas
         'carga_clientes'    => 'CargaController@formulario',
@@ -25,6 +27,7 @@ class Router
         
         // Pagos
         'validar_pagos'     => 'PagoController@validar',
+        'validar_pago' => 'PagoController@validarPago',
         
         // Asistencia
         'asistencia'        => 'AsistenciaController@index',
@@ -68,6 +71,8 @@ class Router
         'configurar_extras'    => 'ConfigController@configurarExtras',
         //'guardar_campo_extra'  => 'ConfigController@guardarCampoExtra',
         'toggle_extra'         => 'ConfigController@toggleExtra',
+        //Detalle de clientes en vista
+        'get_cliente_detalle' => 'ClienteController@getDetalle',
     ];
 
     public function dispatch(): void

@@ -1,0 +1,1 @@
+[LEX360] Promesa no guardada: faltan datos. monto=100, fecha=, historial_id=14[LEX360] Promesa no guardada: faltan datos. monto=100, fecha=, historial_id=15[LEX360] Promesa no guardada: faltan datos. monto=200, fecha=, historial_id=16[LEX360] Promesa no guardada: faltan datos. monto=5000, fecha=, historial_id=17

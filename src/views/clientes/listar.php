@@ -1,4 +1,4 @@
-<!-- Listado de Clientes -->
+<!-- views/clientes/listar.php -->
 <div class="card bg-dark border-secondary p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0 fw-bold">👥 Gestión de Clientes</h4>
@@ -18,14 +18,11 @@
                     <th class="text-secondary text-uppercase small">Identificación</th>
                     <th class="text-secondary text-uppercase small">Saldo</th>
                     <th class="text-secondary text-uppercase small">Teléfono</th>
-                    
-                    <!-- ✅ CAMPOS EXTRA DINÁMICOS (Encabezados) -->
                     <?php if (!empty($configExtras)): ?>
                         <?php foreach ($configExtras as $extra): ?>
                             <th class="text-secondary text-uppercase small"><?= htmlspecialchars($extra['etiqueta']) ?></th>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                    
                     <th class="text-center text-secondary text-uppercase small">Acciones</th>
                 </tr>
             </thead>
@@ -37,26 +34,20 @@
                     <td><?= htmlspecialchars($cliente['identificacion']) ?></td>
                     <td class="text-warning">Q<?= number_format($cliente['saldo'], 2) ?></td>
                     <td><?= htmlspecialchars($cliente['telefono_1']) ?></td>
-                    
-                    <!-- ✅ CAMPOS EXTRA DINÁMICOS (Valores) -->
                     <?php if (!empty($configExtras)): ?>
                         <?php foreach ($configExtras as $extra): 
                             $val = '-';
                             if (!empty($cliente['data_extras'])) {
-                                $extras = is_string($cliente['data_extras']) 
-                                    ? json_decode($cliente['data_extras'], true) 
-                                    : $cliente['data_extras'];
-                                if (isset($extras[$extra['nombre_campo']])) {
-                                    $val = $extras[$extra['nombre_campo']];
-                                }
+                                $extras = is_string($cliente['data_extras']) ? json_decode($cliente['data_extras'], true) : $cliente['data_extras'];
+                                if (is_array($extras) && isset($extras[$extra['nombre_campo']])) $val = $extras[$extra['nombre_campo']];
                             }
                         ?>
                         <td class="small text-secondary"><?= htmlspecialchars($val) ?></td>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                    
                     <td class="text-center">
-                        <button class="btn btn-sm btn-lex-primary" onclick='abrirModalGestion(<?= $cliente['id'] ?>, "<?= addslashes($cliente['nombre']) ?>", "<?= addslashes($cliente['identificacion'] ?? '') ?>")'>
+                        <button class="btn btn-sm btn-lex-primary" 
+                                onclick='abrirModalGestion(<?= $cliente['id'] ?>, "<?= addslashes($cliente['nombre']) ?>", "<?= addslashes($cliente['identificacion'] ?? '') ?>", <?= $cliente['id_cartera'] ?? 'null' ?>)'>
                             📞 Gestionar
                         </button>
                     </td>
@@ -71,33 +62,30 @@
 </div>
 
 <!-- ========================================== -->
-<!-- MODAL DE GESTIÓN CON CONSULTA PARALELA     -->
+<!-- MODAL DE GESTIÓN                           -->
 <!-- ========================================== -->
 <div class="modal fade" id="modalGestion" tabindex="-1" aria-hidden="true">
-    <!-- Contenedor donde se inyectarán los campos extra -->
-    <div id="extras-gestion-container" class="row g-2 mt-2 mb-3"></div>
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content bg-dark border-secondary shadow-lg">
-            
-            <!-- Header -->
             <div class="modal-header border-secondary bg-secondary bg-opacity-10">
-                <h5 class="modal-title text-white">
-                    📞 Gestionar: <span id="lblCliente" class="text-info fw-bold"></span>
-                </h5>
+                <h5 class="modal-title text-white">📞 Gestionar: <span id="lblCliente" class="text-info fw-bold"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-
-            <!-- Body: 2 Columnas -->
             <div class="modal-body p-0">
                 <div class="row g-0">
-                    
-                    <!-- COLUMNA IZQUIERDA: FORMULARIO DE GESTIÓN (60%) -->
+                    <!-- COLUMNA IZQUIERDA: FORMULARIO -->
                     <div class="col-lg-7 p-4 border-end border-secondary">
                         <h6 class="text-uppercase text-secondary small mb-3 fw-bold">📝 Registro de Gestión</h6>
                         <form id="formGestion">
                             <input type="hidden" id="clienteId" name="cliente_id">
-                            
+                                <!-- ✅ BOTÓN FICHA (DENTRO DEL FORMULARIO, SIN DATA-BS-TOGGLE) -->
+                                <div class="col-md-12 d-flex align-items-end">
+                                    <button type="button" class="btn btn-sm btn-outline-info w-100" id="btnVerFicha">
+                                        👁️ Ver Ficha (Copiar datos)
+                                    </button>
+                                </div>
                             <div class="row g-3">
+                                <!-- Tipología y Estatus -->
                                 <div class="col-md-6">
                                     <label class="form-label small text-secondary">Tipología *</label>
                                     <select class="form-select bg-dark text-white border-secondary" id="tipologia" name="tipologia" required>
@@ -112,103 +100,61 @@
                                         <option value="PAGG">Pago Reportado (Pendiente)</option>
                                     </select>
                                 </div>
-
+                                
+                                <!-- Teléfono utilizado -->
                                 <div class="col-md-6">
                                     <label class="form-label small text-secondary">Teléfono utilizado</label>
-                                    <input type="text" class="form-control bg-dark text-white border-secondary" id="telefonoUsado" name="telefono_usado" placeholder="Ej: 5555-1234">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small text-secondary">Monto Compromiso (Q)</label>
-                                    <input type="number" step="0.01" class="form-control bg-dark text-white border-secondary" id="montoPromesa" name="monto_promesa" placeholder="0.00">
+                                    <input type="text" class="form-control bg-dark text-white border-secondary" name="telefono_utilizado" placeholder="Ej: 5555-1234">
                                 </div>
 
-                                <!-- ✅ CAMPOS EXTRA EN MODAL (Para editar) -->
-                                <?php if (!empty($configExtras)): ?>
-                                    <div class="col-12">
-                                        <hr class="border-secondary my-2">
-                                        <h6 class="text-info small fw-bold mb-2">📦 Información Adicional</h6>
-                                        <div class="row g-2">
-                                            <?php foreach ($configExtras as $extra): 
-                                                $valor = '';
-                                                if (!empty($cliente['data_extras'])) {
-                                                    $extras = is_string($cliente['data_extras']) 
-                                                        ? json_decode($cliente['data_extras'], true) 
-                                                        : $cliente['data_extras'];
-                                                    if (isset($extras[$extra['nombre_campo']])) {
-                                                        $valor = $extras[$extra['nombre_campo']];
-                                                    }
-                                                }
-                                            ?>
-                                            <div class="col-md-6">
-                                                <label class="form-label small text-secondary"><?= htmlspecialchars($extra['etiqueta']) ?></label>
-                                                <input type="text" 
-                                                       name="extra_<?= $extra['nombre_campo'] ?>" 
-                                                       class="form-control bg-dark text-white border-secondary" 
-                                                       value="<?= htmlspecialchars($valor) ?>"
-                                                       placeholder="<?= htmlspecialchars($extra['etiqueta']) ?>">
-                                            </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                                <!-- Campo Monto Dinámico -->
+                                <div class="col-md-6 d-none" id="box-monto">
+                                    <label class="form-label small text-secondary" id="lbl-monto">💰 Monto</label>
+                                    <input type="number" step="0.01" name="monto_gestion" id="inputMonto" class="form-control bg-dark text-white border-secondary" placeholder="0.00">
+                                    <small id="msgMonto" class="text-danger small"></small>
+                                </div>
 
+                                <!-- Campo Fecha Próxima Llamada -->
+                                <div class="col-12 mt-2 d-none" id="contenedorFechaProxima">
+                                    <label class="form-label text-secondary small">📅 Fecha y Hora de Próxima Llamada</label>
+                                    <input type="datetime-local" name="fecha_proxima_llamada" id="fechaProximaInput" class="form-control form-control-sm bg-dark text-white border-secondary">
+                                    <small id="msgFechaProxima" class="text-secondary"></small>
+                                </div>
+
+                                <!-- Extras Dinámicos de Gestión -->
+                                <div id="extras-gestion-container" class="row g-2 mb-3"></div>
+
+                                <!-- Comentario -->
                                 <div class="col-12">
                                     <label class="form-label small text-secondary">Comentario Obligatorio *</label>
-                                    <textarea class="form-control bg-dark text-white border-secondary" id="comentario" name="comentario" rows="4" required placeholder="Detalle de la interacción con el cliente..."></textarea>
+                                    <textarea class="form-control bg-dark text-white border-secondary" name="comentario" rows="4" required placeholder="Detalle de la interacción con el cliente..."></textarea>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- COLUMNA DERECHA: CONSULTA PARALELA (40%) -->
-                    <div class="col-lg-5 p-4 bg-dark bg-opacity-50" id="panelConsulta">
+                    <!-- COLUMNA DERECHA: CONSULTA EXTERNA -->
+                    <div class="col-lg-5 p-4 bg-dark bg-opacity-50">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="text-uppercase text-info small fw-bold mb-0">🔍 Consulta Externa</h6>
                             <span class="badge bg-warning text-dark">Base Pendiente</span>
                         </div>
-                        
-                        <p class="text-secondary small mb-3">Busca información en bases externas (Vehículos, Laboral, Vacuna).</p>
-
-                        <!-- Formulario de Búsqueda -->
+                        <p class="text-secondary small mb-3">Busca información en bases externas.</p>
                         <form id="formConsultaExterna" onsubmit="event.preventDefault(); buscarEnBaseExterna();">
-                            <div class="mb-3">
-                                <label class="form-label small text-secondary">DPI / CUI</label>
-                                <input type="text" class="form-control bg-dark text-white border-secondary" id="extDpi" placeholder="Ingrese identificación">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-secondary">Nombre Completo</label>
-                                <input type="text" class="form-control bg-dark text-white border-secondary" id="extNombre" placeholder="Ingrese nombre">
-                            </div>
-                            <button type="submit" class="btn btn-outline-info w-100 mb-2" id="btnBuscar" disabled>
-                                🔍 Buscar en Bases Externas
-                            </button>
+                            <div class="mb-3"><label class="form-label small text-secondary">DPI / CUI</label><input type="text" class="form-control bg-dark text-white border-secondary" id="extDpi"></div>
+                            <div class="mb-3"><label class="form-label small text-secondary">Nombre Completo</label><input type="text" class="form-control bg-dark text-white border-secondary" id="extNombre"></div>
+                            <button type="submit" class="btn btn-outline-info w-100 mb-2" id="btnBuscar" disabled>🔍 Buscar</button>
                         </form>
-
-                        <!-- Área de Resultados (Imprimible) -->
                         <div id="resultadoConsulta" class="consulta-printable" style="display:none;">
                             <div class="alert alert-dark border-secondary p-3 mb-2">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong class="text-info">📋 Resultado de Consulta</strong>
-                                    <small class="text-secondary" id="fechaConsulta"></small>
-                                </div>
-                                <hr class="border-secondary my-2">
-                                <div id="contenidoConsulta" class="small">
-                                    <!-- Aquí se inyectará el contenido dinámico -->
-                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2"><strong class="text-info">📋 Resultado</strong><small class="text-secondary" id="fechaConsulta"></small></div>
+                                <hr class="border-secondary my-2"><div id="contenidoConsulta" class="small"></div>
                             </div>
-                            
-                            <!-- Botones de Acción -->
                             <div class="btn-group w-100">
-                                <button type="button" class="btn btn-sm btn-success" onclick="imprimirConsulta()">
-                                    🖨️ Imprimir
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cerrarConsulta()">
-                                    ✖ Cerrar
-                                </button>
+                                <button type="button" class="btn btn-sm btn-success" onclick="imprimirConsulta()">🖨️ Imprimir</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cerrarConsulta()">✖ Cerrar</button>
                             </div>
                         </div>
-
-                        <!-- Placeholder Inicial -->
                         <div id="placeholderConsulta" class="text-center py-4">
                             <i class="bi bi-database text-secondary" style="font-size: 3rem; opacity: 0.3;"></i>
                             <p class="text-secondary small mt-2 mb-0">Sin datos consultados</p>
@@ -216,230 +162,288 @@
                     </div>
                 </div>
             </div>
-            <!-- Contenedor para campos extras dinámicos -->
-            <div id="camposExtrasGestion" class="row g-2 mb-3 d-none">
-                <!-- Se llenará vía JS -->
-            </div>
-
-            <script>
-            // Función que se ejecuta al abrir el modal (ya la tienes, agrega esto dentro)
-            window.cargarExtrasGestion = async function(idCartera) {
-                try {
-                    // Ajusta esta ruta a tu controlador de configuración
-                    const res = await fetch(`?action=get_extras_gestion&cartera_id=${idCartera}`);
-                    const extras = await res.json();
-                    
-                    const container = document.getElementById('camposExtrasGestion');
-                    container.innerHTML = '';
-                    
-                    if (extras.length > 0) {
-                        container.classList.remove('d-none');
-                        extras.forEach(ex => {
-                            const div = document.createElement('div');
-                            div.className = 'col-md-6';
-                            div.innerHTML = `
-                                <label class="form-label text-secondary small">${ex.etiqueta}</label>
-                                <input type="text" name="extra_${ex.nombre_campo}" 
-                                    class="form-control form-control-sm bg-dark text-white border-secondary" 
-                                    placeholder="${ex.etiqueta}">
-                            `;
-                            container.appendChild(div);
-                        });
-                    } else {
-                        container.classList.add('d-none');
-                    }
-                } catch (e) {
-                    console.warn('No se pudieron cargar extras de gestión:', e);
-                }
-            };
-
-            // Llama a esta función dentro de abrirModalGestion() después de obtener id_cartera
-            // ejemplo: cargarExtrasGestion(clienteActual.id_cartera);
-            </script>
-            <!-- Footer -->
             <div class="modal-footer border-secondary bg-secondary bg-opacity-10">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success fw-bold px-4" onclick="guardarGestion()">
-                    💾 Guardar Gestión
-                </button>
+                <button type="button" class="btn btn-success fw-bold px-4" onclick="guardarGestion()">💾 Guardar Gestión</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ESTILOS DE IMPRESIÓN -->
+<!-- ========================================== -->
+<!-- 📋 MODAL FICHA (HERMANO, NO HIJO)          -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalFichaCliente" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white">📋 Ficha de Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ficha-datos" class="row g-2"></div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <small class="text-secondary">💡 Haz click en cualquier campo para copiar. Al cerrar, el dato queda en el portapapeles.</small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ESTILOS -->
 <style>
 @media print {
     body * { visibility: hidden; }
     #resultadoConsulta, #resultadoConsulta * { visibility: visible; }
-    #resultadoConsulta {
-        position: absolute; left: 0; top: 0; width: 100%;
-        background: white !important; color: black !important; padding: 20px;
-    }
+    #resultadoConsulta { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; padding: 20px; }
     #resultadoConsulta .btn-group { display: none !important; }
     .modal, .navbar, .footer { display: none !important; }
 }
+.copyable { cursor: pointer; transition: all 0.2s; }
+.copyable:hover { border-color: #0dcaf0 !important; background-color: rgba(13, 202, 240, 0.1) !important; }
+.copy-hint { font-size: 0.7rem; opacity: 0.8; }
+.copyable:hover .copy-hint { opacity: 1; }
 </style>
 
-<!-- SCRIPTS -->
+<!-- ✅ SCRIPT UNIFICADO -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 🔹 Esperar a que Bootstrap 5 esté disponible
-    function esperarBootstrap(callback) {
-        if (typeof bootstrap !== 'undefined') callback();
-        else setTimeout(() => esperarBootstrap(callback), 50);
-    }
+    // ========================
+    // VARIABLES GLOBALES
+    // ========================
+    window.clienteActual = {};
 
-    esperarBootstrap(function() {
-        const modalEl = document.getElementById('modalGestion');
-        if (!modalEl) return;
-        
-        const modalGestion = new bootstrap.Modal(modalEl);
-        let clienteActual = { id: null, nombre: '', dpi: '' };
+    // Instancias de Modales
+    const modalGestionEl = document.getElementById('modalGestion');
+    const modalFichaEl = document.getElementById('modalFichaCliente');
+    let modalGestion, modalFicha;
 
-        // ✅ Funciones expuestas globalmente para onclick=""
-        window.abrirModalGestion = function(id, nombre, dpi = '') {
-            clienteActual = { id, nombre, dpi };
-            document.getElementById('clienteId').value = id;
-            document.getElementById('lblCliente').textContent = nombre;
-            document.getElementById('formGestion').reset();
-            document.getElementById('resultadoConsulta').style.display = 'none';
-            document.getElementById('placeholderConsulta').style.display = 'block';
-            
-            // Cargar tipologías
-            fetch(`?action=get_tipologias&cliente_id=${id}`)
+    if (modalGestionEl) modalGestion = new bootstrap.Modal(modalGestionEl);
+    if (modalFichaEl) modalFicha = new bootstrap.Modal(modalFichaEl);
+
+    // ========================
+    // LOGICA DE GESTIÓN
+    // ========================
+    if (modalGestionEl) {
+        const selTipologia = document.getElementById('tipologia');
+        const selEstatus = document.getElementById('estatus');
+        const divFecha = document.getElementById('contenedorFechaProxima');
+        const inputFecha = document.getElementById('fechaProximaInput');
+        const msgFecha = document.getElementById('msgFechaProxima');
+        const boxMonto = document.getElementById('box-monto');
+        const inputMonto = document.getElementById('inputMonto');
+        const lblMonto = document.getElementById('lbl-monto');
+        const msgMonto = document.getElementById('msgMonto');
+        const containerExtras = document.getElementById('extras-gestion-container');
+        const btnVerFicha = document.getElementById('btnVerFicha');
+
+        let configTipologias = {};
+        fetch('?action=get_tipologias_config')
+            .then(r => r.json())
+            .then(data => { 
+                if (Array.isArray(data)) {
+                    data.forEach(t => configTipologias[t.id] = {
+                        estatus_default: t.estatus_default || 'SINC',
+                        requiere_proxima_fecha: t.requiere_proxima_fecha === true || t.requiere_proxima_fecha === 'true',
+                        requiere_monto: t.requiere_monto === true || t.requiere_monto === 'true'
+                    });
+                }
+            });
+
+        function evaluarCampos() {
+            const tipId = selTipologia?.value;
+            const est = selEstatus?.value;
+            const cfg = configTipologias[tipId] || {};
+            if (divFecha && inputFecha && msgFecha) {
+                const showDate = cfg.requiere_proxima_fecha === true;
+                divFecha.classList.toggle('d-none', !showDate);
+                inputFecha.required = showDate;
+                msgFecha.textContent = showDate ? '⚠️ Obligatorio para esta tipología' : 'Opcional';
+                msgFecha.className = showDate ? 'text-danger small' : 'text-secondary small';
+            }
+            if (boxMonto && inputMonto && lblMonto && msgMonto) {
+                let showAmount = cfg.requiere_monto === true;
+                let label = 'Monto', required = false;
+                if (est === 'COMP') { showAmount = true; label = '💰 Monto Prometido'; required = true; }
+                else if (est === 'PAGG') { showAmount = true; label = '💳 Monto Reportado'; required = true; }
+                boxMonto.classList.toggle('d-none', !showAmount);
+                lblMonto.textContent = label;
+                inputMonto.required = required;
+                msgMonto.textContent = required ? '⚠️ Obligatorio' : '';
+            }
+        }
+        selTipologia?.addEventListener('change', function() {
+            const cfg = configTipologias[this.value] || {};
+            if (selEstatus && cfg.estatus_default) selEstatus.value = cfg.estatus_default;
+            evaluarCampos();
+        });
+        selEstatus?.addEventListener('change', evaluarCampos);
+
+        // ✅ ABRIR MODAL DE GESTIÓN + PRECARGAR DATOS DEL CLIENTE
+        window.abrirModalGestion = function(idCliente, nombre, dpi = '', idCartera = null) {
+            // Guardar datos básicos iniciales
+            window.clienteActual = { id: idCliente, nombre, identificacion: dpi, id_cartera: idCartera };
+
+            // 1. Precargar datos completos del cliente para la Ficha (Background)
+            fetch(`?action=get_cliente_detalle&id=${idCliente}`)
                 .then(r => r.json())
                 .then(data => {
-                    const sel = document.getElementById('tipologia');
-                    sel.innerHTML = '<option value="">Seleccione...</option>';
-                    data.forEach(t => {
-                        const indent = t.padre_id ? '&nbsp;&nbsp;&nbsp;&nbsp;↳ ' : '';
-                        sel.innerHTML += `<option value="${t.id}">${indent}${t.nombre}</option>`;
-                    });
+                    if (data && Object.keys(data).length > 0) {
+                        window.clienteActual = { ...window.clienteActual, ...data };
+                    }
                 })
-                .catch(() => {
-                    document.getElementById('tipologia').innerHTML = '<option value="">Error cargando</option>';
-                });
-            
-            document.getElementById('extDpi').value = dpi;
-            document.getElementById('extNombre').value = nombre;
-            document.getElementById('btnBuscar').disabled = true; // Cambiar a false cuando integres la base externa
-            
-            modalGestion.show();
-            //  Cargar campos extra dinámicos si hay cartera
-            const container = document.getElementById('extras-gestion-container');
-            container.innerHTML = '<div class="text-secondary small"> Cargando campos...</div>';
-            
-            try {
-                const res = await fetch(`?action=get_extras_gestion&cartera_id=${idCartera}`);
-                const extras = await res.json();
-                container.innerHTML = ''; // Limpiar loader
-                
-                if (extras.length > 0) {
-                    extras.forEach(ex => {
-                        const requiredAttr = ex.obligatorio ? 'required' : '';
-                        const star = ex.obligatorio ? '<span class="text-danger">*</span>' : '';
-                        
-                        container.innerHTML += `
-                            <div class="col-md-6">
-                                <label class="form-label text-secondary small">${ex.etiqueta} ${star}</label>
-                                <input type="text" 
-                                    name="extra_${ex.nombre_campo}" 
-                                    class="form-control form-control-sm bg-dark text-white border-secondary" 
-                                    placeholder="Ingrese ${ex.etiqueta.toLowerCase()}"
-                                    ${requiredAttr}>
-                            </div>
-                        `;
+                .catch(() => {}); // Si falla, usamos los datos básicos
+
+            // 2. Resetear formulario
+            const form = document.getElementById('formGestion');
+            if (form) form.reset();
+            if (document.getElementById('lblCliente')) document.getElementById('lblCliente').textContent = nombre;
+            if (document.getElementById('clienteId')) document.getElementById('clienteId').value = idCliente;
+            if (divFecha) divFecha.classList.add('d-none');
+            if (inputFecha) { inputFecha.value = ''; inputFecha.required = false; }
+            if (boxMonto) boxMonto.classList.add('d-none');
+            if (inputMonto) { inputMonto.value = ''; inputMonto.required = false; }
+            if (containerExtras) containerExtras.innerHTML = '';
+
+            // 3. Cargar Tipologías
+            if (selTipologia) {
+                fetch(`?action=get_tipologias&cliente_id=${idCliente}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        selTipologia.innerHTML = '<option value="">Seleccione...</option>';
+                        if (Array.isArray(data)) data.forEach(t => {
+                            const indent = t.padre_id ? '&nbsp;&nbsp;&nbsp;&nbsp;↳ ' : '';
+                            selTipologia.innerHTML += `<option value="${t.id}">${indent}${t.nombre}</option>`;
+                        });
+                        evaluarCampos();
                     });
-                } else {
-                    container.innerHTML = '<small class="text-secondary">No hay campos extra configurados para esta cartera.</small>';
+            }
+            // 4. Cargar Extras de Gestión
+            if (idCartera && containerExtras) {
+                containerExtras.innerHTML = '<small>⏳ Cargando...</small>';
+                fetch(`?action=get_extras_gestion&cartera_id=${idCartera}`)
+                    .then(r => r.json())
+                    .then(extras => {
+                        containerExtras.innerHTML = '';
+                        if (Array.isArray(extras)) extras.forEach(ex => {
+                            containerExtras.innerHTML += `<div class="col-md-6"><label class="form-label small text-secondary">${ex.etiqueta}</label><input type="text" name="extra_${ex.nombre_campo}" class="form-control form-control-sm bg-dark text-white border-secondary"></div>`;
+                        });
+                    });
+            }
+            modalGestion.show();
+        };
+
+        // ✅ ABRIR FICHA (CONTROL MANUAL SIN DATA-BS-TOGGLE)
+        if (btnVerFicha) {
+            btnVerFicha.addEventListener('click', function() {
+                if (modalFicha && window.clienteActual.id) {
+                    renderizarFicha(window.clienteActual);
+                    modalFicha.show(); // Abre la ficha SIN cerrar gestión
                 }
-            } catch (e) {
-                container.innerHTML = '<small class="text-danger">⚠️ Error cargando campos extra</small>';
-            }
-        };
-
-        window.buscarEnBaseExterna = function() {
-            const dpi = document.getElementById('extDpi').value;
-            const nombre = document.getElementById('extNombre').value;
-            
-            if (!dpi && !nombre) {
-                alert('⚠️ Ingrese al menos un criterio de búsqueda');
-                return;
-            }
-            
-            const btn = document.getElementById('btnBuscar');
-            btn.disabled = true; btn.innerHTML = '⏳ Buscando...';
-            
-            // SIMULACIÓN (Reemplazar con fetch real cuando esté lista)
-            setTimeout(() => {
-                const resultado = {
-                    dpi: dpi || 'N/A',
-                    nombre: nombre || 'N/A',
-                    vehiculos: ['Toyota Corolla 2020', 'Honda Civic 2018'],
-                    laboral: { empresa: 'Empresa XYZ S.A.', puesto: 'Gerente', salario: 'Q15,000.00' },
-                    vacuna: 'COVID-19: 2 dosis (2022)'
-                };
-                window.mostrarResultadoConsulta(resultado);
-                btn.disabled = false; btn.innerHTML = '🔍 Buscar en Bases Externas';
-            }, 1000);
-        };
-
-        window.mostrarResultadoConsulta = function(data) {
-            document.getElementById('placeholderConsulta').style.display = 'none';
-            document.getElementById('resultadoConsulta').style.display = 'block';
-            document.getElementById('fechaConsulta').textContent = new Date().toLocaleString();
-            
-            let html = `
-                <div class="mb-2"><strong>DPI:</strong> ${data.dpi}</div>
-                <div class="mb-2"><strong>Nombre:</strong> ${data.nombre}</div>
-                <hr class="border-secondary my-2">`;
-            
-            if (data.vehiculos && data.vehiculos.length > 0) {
-                html += `<div class="mb-2"><strong>🚗 Vehículos:</strong><ul class="mb-0 ps-3">`;
-                data.vehiculos.forEach(v => { html += `<li>${v}</li>`; });
-                html += `</ul></div>`;
-            }
-            if (data.laboral) {
-                html += `<div class="mb-2"><strong>💼 Laboral:</strong><br>&nbsp;&nbsp;• Empresa: ${data.laboral.empresa}<br>&nbsp;&nbsp;• Puesto: ${data.laboral.puesto}<br>&nbsp;&nbsp;• Salario: ${data.laboral.salario}</div>`;
-            }
-            if (data.vacuna) {
-                html += `<div class="mb-2"><strong>💉 Vacunación:</strong> ${data.vacuna}</div>`;
-            }
-            document.getElementById('contenidoConsulta').innerHTML = html;
-        };
-
-        window.imprimirConsulta = function() { window.print(); };
-        
-        window.cerrarConsulta = function() {
-            document.getElementById('resultadoConsulta').style.display = 'none';
-            document.getElementById('placeholderConsulta').style.display = 'block';
-        };
+            });
+        }
 
         window.guardarGestion = function() {
             const form = document.getElementById('formGestion');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-
+            if (!form || !form.checkValidity()) { if(form) form.reportValidity(); return; }
             const btn = document.querySelector('#modalGestion .btn-success');
-            const originalText = btn.innerHTML;
+            if (!btn) return;
+            const orig = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = '⏳ Guardando...';
-
             fetch('?action=registrar_gestion', { method: 'POST', body: new FormData(form) })
                 .then(r => r.json())
                 .then(res => {
-                    btn.disabled = false; btn.innerHTML = originalText;
-                    if (res.success) {
-                        modalGestion.hide();
-                        location.reload();
-                    } else {
-                        alert('❌ ' + (res.message || res.msg));
-                    }
+                    btn.disabled = false; btn.innerHTML = orig;
+                    if (res.success) { modalGestion.hide(); location.reload(); }
+                    else alert('❌ ' + (res.message || res.msg));
                 })
-                .catch(() => {
-                    btn.disabled = false; btn.innerHTML = originalText;
-                    alert('❌ Error de conexión');
-                });
+                .catch(() => { btn.disabled = false; btn.innerHTML = orig; alert('❌ Error'); });
         };
+    }
+
+    // ========================
+    // RENDERIZAR FICHA
+    // ========================
+    function renderizarFicha(cliente) {
+        const container = document.getElementById('ficha-datos');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const formatMoney = (val) => {
+            const num = parseFloat(val);
+            if (isNaN(num)) return 'Q0.00';
+            return new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2 }).format(num);
+        };
+
+        const addField = (label, value, type = 'text') => {
+            if (!value || value === 'Nunca' || String(value).trim() === '') return '';
+            const display = type === 'money' ? `Q${formatMoney(value)}` : value;
+            return `<div class="col-md-6 mb-2">
+                <label class="form-label text-secondary small mb-1">${label}</label>
+                <div class="copyable p-2 rounded bg-dark border border-secondary d-flex justify-content-between align-items-center cursor-pointer" data-clipboard="${String(value)}">
+                    <span class="${type === 'money' ? 'text-warning fw-bold' : 'text-white'}">${display}</span>
+                    <span class="badge bg-secondary copy-hint" style="font-size:0.7rem">📋</span>
+                </div>
+            </div>`;
+        };
+
+        let html = '';
+        html += addField('Nombre', cliente.nombre);
+        html += addField('Identificación', cliente.identificacion);
+        html += addField('Cuenta', cliente.cuenta);
+        html += addField('Saldo Total', cliente.saldo, 'money');
+        html += addField('Estado', cliente.estado);
+        html += addField('Teléfono 1', cliente.telefono_1);
+        html += addField('Teléfono 2', cliente.telefono_2);
+        html += addField('Última Gestión', cliente.fecha_ultima_gestion ? new Date(cliente.fecha_ultima_gestion).toLocaleString('es-GT') : 'Nunca');
+
+        // ✅ Parsear extras
+        try {
+            let extras = {};
+            if (typeof cliente.data_extras === 'string') extras = JSON.parse(cliente.data_extras);
+            else if (typeof cliente.data_extras === 'object' && cliente.data_extras !== null) extras = cliente.data_extras;
+            
+            if (extras && typeof extras === 'object') {
+                Object.entries(extras).forEach(([key, val]) => {
+                    if (val && val !== 'null' && val !== '') {
+                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += addField(label, val);
+                    }
+                });
+            }
+        } catch (e) { console.warn('Error parsing extras:', e); }
+
+        container.innerHTML = html;
+    }
+
+    // ========================
+    // COPIAR AL PORTAPAPELES
+    // ========================
+    document.addEventListener('click', function(e) {
+        const el = e.target.closest('.copyable');
+        if (el) {
+            const text = el.dataset.clipboard;
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const hint = el.querySelector('.copy-hint');
+                    if (hint) {
+                        const original = hint.textContent;
+                        hint.textContent = '✅';
+                        hint.classList.replace('bg-secondary', 'bg-success');
+                        setTimeout(() => { hint.textContent = original; hint.classList.replace('bg-success', 'bg-secondary'); }, 1500);
+                    }
+                });
+            }
+        }
     });
+
+    // Funciones auxiliares
+    window.buscarEnBaseExterna = function() { alert('🔍 Base externa pendiente'); };
+    window.imprimirConsulta = function() { window.print(); };
+    window.cerrarConsulta = function() {
+        document.getElementById('resultadoConsulta').style.display = 'none';
+        document.getElementById('placeholderConsulta').style.display = 'block';
+    };
 });
 </script>

@@ -83,4 +83,20 @@ public function actualizar(): void
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     }
+    public function getDetalle(): void
+    {
+        header('Content-Type: application/json');
+        $this->session->requireAuth();
+        
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) { echo json_encode([]); exit; }
+        
+        $stmt = $this->db->prepare("
+            SELECT id, nombre, identificacion, cuenta, saldo, telefono_1, telefono_2, estado, fecha_ultima_gestion, data_extras
+            FROM clientes WHERE id = :id
+        ");
+        $stmt->execute(['id' => $id]);
+        echo json_encode($stmt->fetch());
+        exit;
+    }
 }

@@ -34,7 +34,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         
         // ✅ Buffer de salida (PATRÓN ARQUITECTÓNICO)
         ob_start();
-        require_once __DIR__ . '/../../views/carteras/configurar_extras.php';
+        require_once __DIR__ . '/../views/carteras/configurar_extras.php';
         $viewContent = ob_get_clean();
         
         // ✅ Renderizar layout maestro (frontend.php)
