@@ -73,6 +73,7 @@ class Router
         'toggle_extra'         => 'ConfigController@toggleExtra',
         //Detalle de clientes en vista
         'get_cliente_detalle' => 'ClienteController@getDetalle',
+        'get_promesas_pendientes' => 'GestionController@getPromesasPendientes',
     ];
 
     public function dispatch(): void

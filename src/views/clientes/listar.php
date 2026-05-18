@@ -124,6 +124,15 @@
                                 <!-- Extras Dinámicos de Gestión -->
                                 <div id="extras-gestion-container" class="row g-2 mb-3"></div>
 
+                                <!-- ✅ Selección de Promesa (Solo visible si estatus = PAGG) -->
+                                <div class="col-12 d-none" id="box-promesas-pendientes">
+                                    <label class="form-label small text-secondary">📌 ¿A qué promesa se aplica este pago?</label>
+                                    <div id="lista-promesas" class="bg-dark border border-secondary rounded p-2" style="max-height: 120px; overflow-y: auto;">
+                                        <small class="text-secondary">⏳ Cargando promesas...</small>
+                                    </div>
+                                    <input type="hidden" name="id_promesa_seleccionada" id="inputPromesaSeleccionada" value="">
+                                </div>
+
                                 <!-- Comentario -->
                                 <div class="col-12">
                                     <label class="form-label small text-secondary">Comentario Obligatorio *</label>
@@ -445,5 +454,49 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resultadoConsulta').style.display = 'none';
         document.getElementById('placeholderConsulta').style.display = 'block';
     };
+});
+// Función para cargar promesas pendientes
+function cargarPromesasPendientes(clienteId) {
+    const box = document.getElementById('box-promesas-pendientes');
+    const lista = document.getElementById('lista-promesas');
+    const input = document.getElementById('inputPromesaSeleccionada');
+    
+    box.classList.remove('d-none');
+    lista.innerHTML = '<small class="text-secondary">⏳ Cargando promesas...</small>';
+    input.value = '';
+
+    fetch(`?action=get_promesas_pendientes&cliente_id=${clienteId}`)
+        .then(r => r.json())
+        .then(promesas => {
+            lista.innerHTML = '';
+            if (!promesas || promesas.length === 0) {
+                lista.innerHTML = '<small class="text-warning">⚠️ No hay promesas pendientes. Se registrará como pago genérico.</small>';
+                return;
+            }
+            promesas.forEach(p => {
+                lista.innerHTML += `
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio" name="id_promesa_seleccionada" value="${p.id}" id="prom_${p.id}">
+                        <label class="form-check-label text-secondary small" for="prom_${p.id}">
+                            💰 <strong>Q${parseFloat(p.monto_prometido).toFixed(2)}</strong> | Vence: ${new Date(p.fecha_compromiso).toLocaleDateString('es-GT')}
+                        </label>
+                    </div>`;
+            });
+        })
+        .catch(() => lista.innerHTML = '<small class="text-danger">⚠️ Error cargando promesas</small>');
+}
+
+// Modifica tu listener de estatus actual para incluir esta llamada:
+selEstatus?.addEventListener('change', function() {
+    const est = this.value;
+    const clienteId = document.getElementById('clienteId').value;
+
+    if (est === 'PAGG' && clienteId) {
+        cargarPromesasPendientes(clienteId);
+    } else {
+        document.getElementById('box-promesas-pendientes').classList.add('d-none');
+        document.getElementById('inputPromesaSeleccionada').value = '';
+    }
+    evaluarCampos(); // Tu función existente
 });
 </script>

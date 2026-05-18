@@ -74,8 +74,22 @@ class GestionController extends \LEX360\Core\Controller
                 exit;
             }
 
+            
+
             // 4. Capturar extras dinámicos
-            $jsonExtras = $this->capturarExtras($_POST);
+            //$jsonExtras = $this->capturarExtras($_POST);//Se agrega id de promesa pendiente
+            // ... justo antes de crear $jsonExtras ...
+            $idPromesaSeleccionada = $_POST['id_promesa_seleccionada'] ?? null;
+
+            // Inyectar en extras
+            $extras = $this->capturarExtras($_POST);
+            $extrasArr = json_decode($extras, true) ?: [];
+            if ($idPromesaSeleccionada) {
+                $extrasArr['id_promesa_aplicada'] = (int)$idPromesaSeleccionada;
+            }
+            $jsonExtras = json_encode($extrasArr, JSON_UNESCAPED_UNICODE);
+
+            // ... sigue tu INSERT en historial con $jsonExtras ...            
 
             // 5. Insertar en Historial
             $stmt = $this->db->prepare("
@@ -219,4 +233,20 @@ class GestionController extends \LEX360\Core\Controller
         }
         exit;
     } */
+    public function getPromesasPendientes(): void
+    {
+        header('Content-Type: application/json');
+        $clienteId = (int)($_GET['cliente_id'] ?? 0);
+        if (!$clienteId) { echo json_encode([]); exit; }
+
+        $stmt = $this->db->prepare("
+            SELECT id, monto_prometido, fecha_compromiso 
+            FROM promesas 
+            WHERE id_cliente = :cid AND estatus = 'pendiente' 
+            ORDER BY fecha_compromiso ASC
+        ");
+        $stmt->execute(['cid' => $clienteId]);
+        echo json_encode($stmt->fetchAll());
+        exit;
+    }
 }

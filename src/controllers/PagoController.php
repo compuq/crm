@@ -161,7 +161,42 @@ class PagoController extends Controller
                 'monto' => $pago['monto'],
                 'monto2' => $pago['monto']
             ]);
+            // ... después de actualizar pagos e historial a 'PAGO' ...
 
+            // 🔍 Obtener historial asociado para leer data_extras
+            $stmtHist = $this->db->prepare("SELECT data_extras FROM historial WHERE id = :id");
+            $stmtHist->execute(['id' => $pago['id_historial']]);
+            $historial = $stmtHist->fetch();
+            $extras = json_decode($historial['data_extras'] ?? '{}', true);
+
+            $idPromesaExplicita = $extras['id_promesa_aplicada'] ?? null;
+
+            if ($idPromesaExplicita) {
+                // ✅ CASO 1: El gestor seleccionó explícitamente una promesa
+                $this->db->prepare("UPDATE promesas SET estatus = 'cumplida' WHERE id = :id AND estatus = 'pendiente'")
+                        ->execute(['id' => $idPromesaExplicita]);
+            } else {
+                // 🔄 CASO 2: Pago genérico → aplicar lógica FIFO (tu código anterior)
+                $montoDisponible = floatval($pago['monto']);
+                $stmtPromesas = $this->db->prepare("
+                    SELECT id, monto_prometido FROM promesas 
+                    WHERE id_cliente = :cliente_id AND estatus = 'pendiente' 
+                    ORDER BY fecha_compromiso ASC, fecha_registro ASC
+                    FOR UPDATE
+                ");
+                $stmtPromesas->execute(['cliente_id' => $pago['id_cliente']]);
+                $promesasPendientes = $stmtPromesas->fetchAll();
+
+                foreach ($promesasPendientes as $promesa) {
+                    if ($montoDisponible <= 0) break;
+                    if ($montoDisponible >= $promesa['monto_prometido']) {
+                        $this->db->prepare("UPDATE promesas SET estatus = 'cumplida' WHERE id = :id")->execute(['id' => $promesa['id']]);
+                        $montoDisponible -= $promesa['monto_prometido'];
+                    } else {
+                        $montoDisponible = 0;
+                    }
+                }
+            }
             $this->db->commit();
             echo json_encode(['success' => true, 'message' => '✅ Pago validado correctamente']);
 
