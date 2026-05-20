@@ -15,10 +15,14 @@
         <ul class="navbar-nav me-auto">
             <li class="nav-item"><a class="nav-link" href="?action=dashboard">🏠 Inicio</a></li>
 
+            
+
             <!-- MENÚ SEGÚN ROL -->
             <?php if ($user['role'] === 'gestor'): ?>
                 <li class="nav-item"><a class="nav-link" href="?action=clientes">👥 Mis Clientes</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=asistencia">🕒 Asistencia</a></li>
+
+                
 
             <?php elseif ($user['role'] === 'supervisor'): ?>
                 <li class="nav-item"><a class="nav-link" href="?action=clientes">👥 Equipo</a></li>

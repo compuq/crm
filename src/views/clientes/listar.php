@@ -78,12 +78,19 @@
                         <h6 class="text-uppercase text-secondary small mb-3 fw-bold">📝 Registro de Gestión</h6>
                         <form id="formGestion">
                             <input type="hidden" id="clienteId" name="cliente_id">
-                                <!-- ✅ BOTÓN FICHA (DENTRO DEL FORMULARIO, SIN DATA-BS-TOGGLE) -->
-                                <div class="col-md-12 d-flex align-items-end">
-                                    <button type="button" class="btn btn-sm btn-outline-info w-100" id="btnVerFicha">
-                                        👁️ Ver Ficha (Copiar datos)
-                                    </button>
-                                </div>
+                            <!-- ✅ BOTÓN FICHA (DENTRO DEL FORMULARIO, SIN DATA-BS-TOGGLE) -->
+                            <div class="col-md-12 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-outline-info w-100" id="btnVerFicha">
+                                    👁️ Ver Ficha (Copiar datos)
+                                </button>
+                            </div>
+                            <!-- Botón para ver últimas gestiones -->
+                            <!-- Botón corregido (SIN atributos data-bs-*) -->
+                            <div class="col-12 mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnVerHistorial">
+                                    📜 Ver Últimas 5 Gestiones
+                                </button>
+                            </div>                            
                             <div class="row g-3">
                                 <!-- Tipología y Estatus -->
                                 <div class="col-md-6">
@@ -117,7 +124,7 @@
                                 <!-- Campo Fecha Próxima Llamada -->
                                 <div class="col-12 mt-2 d-none" id="contenedorFechaProxima">
                                     <label class="form-label text-secondary small">📅 Fecha y Hora de Próxima Llamada</label>
-                                    <input type="datetime-local" name="fecha_proxima_llamada" id="fechaProximaInput" class="form-control form-control-sm bg-dark text-white border-secondary">
+                                    <input type="datetime-local" name="fecha_compromiso" id="fechaProximaInput" class="form-control form-control-sm bg-dark text-white border-secondary">
                                     <small id="msgFechaProxima" class="text-secondary"></small>
                                 </div>
 
@@ -125,14 +132,26 @@
                                 <div id="extras-gestion-container" class="row g-2 mb-3"></div>
 
                                 <!-- ✅ Selección de Promesa (Solo visible si estatus = PAGG) -->
-                                <div class="col-12 d-none" id="box-promesas-pendientes">
-                                    <label class="form-label small text-secondary">📌 ¿A qué promesa se aplica este pago?</label>
-                                    <div id="lista-promesas" class="bg-dark border border-secondary rounded p-2" style="max-height: 120px; overflow-y: auto;">
-                                        <small class="text-secondary">⏳ Cargando promesas...</small>
-                                    </div>
-                                    <input type="hidden" name="id_promesa_seleccionada" id="inputPromesaSeleccionada" value="">
-                                </div>
+                                <!-- PROMESAS PENDIENTES -->
+                                <div id="box-promesas-pendientes"
+                                    class="mt-3 p-2 border border-warning rounded d-none">
 
+                                    <label class="form-label small text-warning fw-bold">
+                                        📌 ¿A qué promesa se aplica este pago?
+                                    </label>
+
+                                    <div id="lista-promesas"
+                                        class="bg-dark rounded p-2"
+                                            style="max-height:150px; overflow-y:auto;">
+
+                                        <small class="text-secondary">
+                                            Sin promesas cargadas
+                                        </small>
+
+                                    </div>
+
+
+                                </div>
                                 <!-- Comentario -->
                                 <div class="col-12">
                                     <label class="form-label small text-secondary">Comentario Obligatorio *</label>
@@ -199,7 +218,30 @@
         </div>
     </div>
 </div>
-
+<!-- 📜 MODAL HISTORIAL DE GESTIONES -->
+<div class="modal fade" id="modalHistorialGestiones" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white">📜 Historial Reciente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="historial-lista" class="list-group list-group-flush">
+                    <small class="text-secondary">⏳ Cargando gestiones...</small>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <small class="text-secondary">💡 Las gestiones se muestran de más reciente a más antigua.</small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 📞 PANEL DE ALERTAS (LADO DERECHO) -->
+<div id="alertas-panel" class="position-fixed top-0 end-0 p-3" style="z-index: 10000; max-width: 320px;">
+    <!-- Aquí se inyectan las alertas dinámicamente -->
+</div>
 <!-- ESTILOS -->
 <style>
 @media print {
@@ -217,186 +259,162 @@
 
 <!-- ✅ SCRIPT UNIFICADO -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // ========================
+document.addEventListener('DOMContentLoaded', function () {
+
+    // =========================================
     // VARIABLES GLOBALES
-    // ========================
+    // =========================================
     window.clienteActual = {};
 
-    // Instancias de Modales
     const modalGestionEl = document.getElementById('modalGestion');
     const modalFichaEl = document.getElementById('modalFichaCliente');
-    let modalGestion, modalFicha;
+
+    let modalGestion = null;
+    let modalFicha = null;
 
     if (modalGestionEl) modalGestion = new bootstrap.Modal(modalGestionEl);
     if (modalFichaEl) modalFicha = new bootstrap.Modal(modalFichaEl);
 
-    // ========================
-    // LOGICA DE GESTIÓN
-    // ========================
-    if (modalGestionEl) {
-        const selTipologia = document.getElementById('tipologia');
-        const selEstatus = document.getElementById('estatus');
-        const divFecha = document.getElementById('contenedorFechaProxima');
-        const inputFecha = document.getElementById('fechaProximaInput');
-        const msgFecha = document.getElementById('msgFechaProxima');
-        const boxMonto = document.getElementById('box-monto');
-        const inputMonto = document.getElementById('inputMonto');
-        const lblMonto = document.getElementById('lbl-monto');
-        const msgMonto = document.getElementById('msgMonto');
-        const containerExtras = document.getElementById('extras-gestion-container');
-        const btnVerFicha = document.getElementById('btnVerFicha');
+    // =========================================
+    // REFERENCIAS DOM
+    // =========================================
+    const selTipologia = document.getElementById('tipologia');
+    const selEstatus = document.getElementById('estatus');
+    const divFecha = document.getElementById('contenedorFechaProxima');
+    const inputFecha = document.getElementById('fechaProximaInput');
+    const msgFecha = document.getElementById('msgFechaProxima');
+    const boxMonto = document.getElementById('box-monto');
+    const inputMonto = document.getElementById('inputMonto');
+    const lblMonto = document.getElementById('lbl-monto');
+    const msgMonto = document.getElementById('msgMonto');
+    const containerExtras = document.getElementById('extras-gestion-container');
+    const btnVerFicha = document.getElementById('btnVerFicha');
+    const btnVerHistorial = document.getElementById('btnVerHistorial');
 
-        let configTipologias = {};
-        fetch('?action=get_tipologias_config')
-            .then(r => r.json())
-            .then(data => { 
-                if (Array.isArray(data)) {
-                    data.forEach(t => configTipologias[t.id] = {
+    // ✅ PROMESAS
+    const boxPromesas = document.getElementById('box-promesas-pendientes');
+    const listaPromesas = document.getElementById('lista-promesas');
+    const inputPromesa = document.getElementById('inputPromesaSeleccionada');
+
+    // =========================================
+    // CONFIGURACIÓN TIPOLOGÍAS
+    // =========================================
+    let configTipologias = {};
+
+    fetch('?action=get_tipologias_config')
+        .then(r => r.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                data.forEach(t => {
+                    configTipologias[t.id] = {
                         estatus_default: t.estatus_default || 'SINC',
                         requiere_proxima_fecha: t.requiere_proxima_fecha === true || t.requiere_proxima_fecha === 'true',
                         requiere_monto: t.requiere_monto === true || t.requiere_monto === 'true'
-                    });
-                }
-            });
-
-        function evaluarCampos() {
-            const tipId = selTipologia?.value;
-            const est = selEstatus?.value;
-            const cfg = configTipologias[tipId] || {};
-            if (divFecha && inputFecha && msgFecha) {
-                const showDate = cfg.requiere_proxima_fecha === true;
-                divFecha.classList.toggle('d-none', !showDate);
-                inputFecha.required = showDate;
-                msgFecha.textContent = showDate ? '⚠️ Obligatorio para esta tipología' : 'Opcional';
-                msgFecha.className = showDate ? 'text-danger small' : 'text-secondary small';
+                    };
+                });
             }
-            if (boxMonto && inputMonto && lblMonto && msgMonto) {
-                let showAmount = cfg.requiere_monto === true;
-                let label = 'Monto', required = false;
-                if (est === 'COMP') { showAmount = true; label = '💰 Monto Prometido'; required = true; }
-                else if (est === 'PAGG') { showAmount = true; label = '💳 Monto Reportado'; required = true; }
-                boxMonto.classList.toggle('d-none', !showAmount);
-                lblMonto.textContent = label;
-                inputMonto.required = required;
-                msgMonto.textContent = required ? '⚠️ Obligatorio' : '';
-            }
-        }
-        selTipologia?.addEventListener('change', function() {
-            const cfg = configTipologias[this.value] || {};
-            if (selEstatus && cfg.estatus_default) selEstatus.value = cfg.estatus_default;
-            evaluarCampos();
         });
-        selEstatus?.addEventListener('change', evaluarCampos);
 
-        // ✅ ABRIR MODAL DE GESTIÓN + PRECARGAR DATOS DEL CLIENTE
-        window.abrirModalGestion = function(idCliente, nombre, dpi = '', idCartera = null) {
-            // Guardar datos básicos iniciales
-            window.clienteActual = { id: idCliente, nombre, identificacion: dpi, id_cartera: idCartera };
+    // =========================================
+    // FUNCIONES AUXILIARES
+    // =========================================
+    function evaluarCampos() {
+        const tipId = selTipologia ? selTipologia.value : '';
+        const est = selEstatus ? selEstatus.value : '';
+        const cfg = configTipologias[tipId] || {};
 
-            // 1. Precargar datos completos del cliente para la Ficha (Background)
-            fetch(`?action=get_cliente_detalle&id=${idCliente}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && Object.keys(data).length > 0) {
-                        window.clienteActual = { ...window.clienteActual, ...data };
-                    }
-                })
-                .catch(() => {}); // Si falla, usamos los datos básicos
-
-            // 2. Resetear formulario
-            const form = document.getElementById('formGestion');
-            if (form) form.reset();
-            if (document.getElementById('lblCliente')) document.getElementById('lblCliente').textContent = nombre;
-            if (document.getElementById('clienteId')) document.getElementById('clienteId').value = idCliente;
-            if (divFecha) divFecha.classList.add('d-none');
-            if (inputFecha) { inputFecha.value = ''; inputFecha.required = false; }
-            if (boxMonto) boxMonto.classList.add('d-none');
-            if (inputMonto) { inputMonto.value = ''; inputMonto.required = false; }
-            if (containerExtras) containerExtras.innerHTML = '';
-
-            // 3. Cargar Tipologías
-            if (selTipologia) {
-                fetch(`?action=get_tipologias&cliente_id=${idCliente}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        selTipologia.innerHTML = '<option value="">Seleccione...</option>';
-                        if (Array.isArray(data)) data.forEach(t => {
-                            const indent = t.padre_id ? '&nbsp;&nbsp;&nbsp;&nbsp;↳ ' : '';
-                            selTipologia.innerHTML += `<option value="${t.id}">${indent}${t.nombre}</option>`;
-                        });
-                        evaluarCampos();
-                    });
-            }
-            // 4. Cargar Extras de Gestión
-            if (idCartera && containerExtras) {
-                containerExtras.innerHTML = '<small>⏳ Cargando...</small>';
-                fetch(`?action=get_extras_gestion&cartera_id=${idCartera}`)
-                    .then(r => r.json())
-                    .then(extras => {
-                        containerExtras.innerHTML = '';
-                        if (Array.isArray(extras)) extras.forEach(ex => {
-                            containerExtras.innerHTML += `<div class="col-md-6"><label class="form-label small text-secondary">${ex.etiqueta}</label><input type="text" name="extra_${ex.nombre_campo}" class="form-control form-control-sm bg-dark text-white border-secondary"></div>`;
-                        });
-                    });
-            }
-            modalGestion.show();
-        };
-
-        // ✅ ABRIR FICHA (CONTROL MANUAL SIN DATA-BS-TOGGLE)
-        if (btnVerFicha) {
-            btnVerFicha.addEventListener('click', function() {
-                if (modalFicha && window.clienteActual.id) {
-                    renderizarFicha(window.clienteActual);
-                    modalFicha.show(); // Abre la ficha SIN cerrar gestión
-                }
-            });
+        if (divFecha && inputFecha && msgFecha) {
+            const showDate = cfg.requiere_proxima_fecha === true;
+            divFecha.classList.toggle('d-none', !showDate);
+            inputFecha.required = showDate;
+            msgFecha.textContent = showDate ? '⚠️ Obligatorio para esta tipología' : '';
         }
 
-        window.guardarGestion = function() {
-            const form = document.getElementById('formGestion');
-            if (!form || !form.checkValidity()) { if(form) form.reportValidity(); return; }
-            const btn = document.querySelector('#modalGestion .btn-success');
-            if (!btn) return;
-            const orig = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = '⏳ Guardando...';
-            fetch('?action=registrar_gestion', { method: 'POST', body: new FormData(form) })
-                .then(r => r.json())
-                .then(res => {
-                    btn.disabled = false; btn.innerHTML = orig;
-                    if (res.success) { modalGestion.hide(); location.reload(); }
-                    else alert('❌ ' + (res.message || res.msg));
-                })
-                .catch(() => { btn.disabled = false; btn.innerHTML = orig; alert('❌ Error'); });
-        };
+        if (boxMonto && inputMonto) {
+            let showAmount = cfg.requiere_monto === true;
+            let label = '💰 Monto', required = false;
+            if (est === 'COMP') { showAmount = true; label = '💰 Monto Prometido'; required = true; }
+            else if (est === 'PAGG') { showAmount = true; label = '💳 Monto Reportado'; required = true; }
+            boxMonto.classList.toggle('d-none', !showAmount);
+            lblMonto.textContent = label;
+            inputMonto.required = required;
+            msgMonto.textContent = required ? '⚠️ Obligatorio' : '';
+        }
     }
 
-    // ========================
-    // RENDERIZAR FICHA
-    // ========================
+    function cargarPromesasPendientes(clienteId) {
+        if (!listaPromesas) return;
+        listaPromesas.innerHTML = `<small class="text-secondary">⏳ Cargando promesas...</small>`;
+        if (boxPromesas) { boxPromesas.classList.remove('d-none'); boxPromesas.style.display = 'block'; }
+        if (inputPromesa) inputPromesa.value = '';
+
+        fetch(`?action=get_promesas_pendientes&cliente_id=${clienteId}`)
+            .then(res => res.ok ? res.json() : Promise.reject('Error HTTP'))
+            .then(promesas => {
+                listaPromesas.innerHTML = '';
+                if (!Array.isArray(promesas) || promesas.length === 0) {
+                    listaPromesas.innerHTML = `<small class="text-warning">⚠️ No hay promesas pendientes</small>`;
+                    return;
+                }
+                promesas.forEach(p => {
+                    let fechaTxt = 'Sin fecha';
+                    try { if (p.fecha_compromiso) fechaTxt = new Date(p.fecha_compromiso.replace(' ', 'T')).toLocaleDateString('es-GT'); } catch (e) {}
+                    listaPromesas.insertAdjacentHTML('beforeend', `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="id_promesa_seleccionada" value="${p.id}" id="prom_${p.id}">
+                            <label class="form-check-label text-secondary small" for="prom_${p.id}">
+                                💰 <strong>Q${parseFloat(p.monto_prometido || 0).toFixed(2)}</strong> | Vence: ${fechaTxt}
+                            </label>
+                        </div>`);
+                });
+            })
+            .catch(() => listaPromesas.innerHTML = `<small class="text-danger">❌ Error cargando</small>`);
+    }
+
+    function cargarUltimasGestiones(clienteId) {
+        const lista = document.getElementById('historial-lista');
+        if (!lista) return;
+        lista.innerHTML = '<small class="text-secondary">⏳ Cargando gestiones...</small>';
+        fetch(`?action=get_ultimas_gestiones&cliente_id=${clienteId}`)
+            .then(res => res.ok ? res.json() : Promise.reject('Error'))
+            .then(gestiones => {
+                lista.innerHTML = '';
+                if (!Array.isArray(gestiones) || gestiones.length === 0) {
+                    lista.innerHTML = '<small class="text-warning">⚠️ No hay gestiones registradas.</small>';
+                    return;
+                }
+                gestiones.forEach(g => {
+                    const badgeClass = { 'SINC': 'bg-secondary', 'COMP': 'bg-warning text-dark', 'PAGG': 'bg-info text-dark', 'PAGO': 'bg-success' }[g.estatus] || 'bg-secondary';
+                    lista.insertAdjacentHTML('beforeend', `
+                        <div class="list-group-item bg-dark border-secondary mb-2 rounded">
+                            <span class="badge ${badgeClass} mb-1">${g.estatus}</span>
+                            <strong class="text-white d-block">${g.tipologia || 'Sin tipología'}</strong>
+                            <div class="small text-secondary">🕐 ${g.fecha_gestion_fmt || ''} • 👤 ${g.gestor || '?'}</div>
+                            <p class="text-secondary small mt-2 mb-0">${g.comentario ? g.comentario.substring(0, 200) + '...' : ''}</p>
+                            ${g.fecha_proxima_fmt ? `<div class="mt-1"><small class="text-info">📅 Próxima: ${g.fecha_proxima_fmt}</small></div>` : ''}
+                        </div>`);
+                });
+            })
+            .catch(() => lista.innerHTML = `<small class="text-danger">⚠️ Error</small>`);
+    }
+
     function renderizarFicha(cliente) {
         const container = document.getElementById('ficha-datos');
         if (!container) return;
         container.innerHTML = '';
-
-        const formatMoney = (val) => {
-            const num = parseFloat(val);
-            if (isNaN(num)) return 'Q0.00';
-            return new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2 }).format(num);
-        };
-
+        const formatMoney = (val) => { const n = parseFloat(val); return isNaN(n) ? 'Q0.00' : new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2 }).format(n); };
         const addField = (label, value, type = 'text') => {
             if (!value || value === 'Nunca' || String(value).trim() === '') return '';
+            const safeValue = String(value).replace(/"/g, '&quot;');
             const display = type === 'money' ? `Q${formatMoney(value)}` : value;
             return `<div class="col-md-6 mb-2">
                 <label class="form-label text-secondary small mb-1">${label}</label>
-                <div class="copyable p-2 rounded bg-dark border border-secondary d-flex justify-content-between align-items-center cursor-pointer" data-clipboard="${String(value)}">
+                <div class="copyable p-2 rounded bg-dark border border-secondary d-flex justify-content-between align-items-center cursor-pointer" data-clipboard="${safeValue}">
                     <span class="${type === 'money' ? 'text-warning fw-bold' : 'text-white'}">${display}</span>
                     <span class="badge bg-secondary copy-hint" style="font-size:0.7rem">📋</span>
                 </div>
             </div>`;
         };
-
         let html = '';
         html += addField('Nombre', cliente.nombre);
         html += addField('Identificación', cliente.identificacion);
@@ -406,13 +424,8 @@ document.addEventListener('DOMContentLoaded', function() {
         html += addField('Teléfono 1', cliente.telefono_1);
         html += addField('Teléfono 2', cliente.telefono_2);
         html += addField('Última Gestión', cliente.fecha_ultima_gestion ? new Date(cliente.fecha_ultima_gestion).toLocaleString('es-GT') : 'Nunca');
-
-        // ✅ Parsear extras
         try {
-            let extras = {};
-            if (typeof cliente.data_extras === 'string') extras = JSON.parse(cliente.data_extras);
-            else if (typeof cliente.data_extras === 'object' && cliente.data_extras !== null) extras = cliente.data_extras;
-            
+            let extras = typeof cliente.data_extras === 'string' ? JSON.parse(cliente.data_extras) : cliente.data_extras || {};
             if (extras && typeof extras === 'object') {
                 Object.entries(extras).forEach(([key, val]) => {
                     if (val && val !== 'null' && val !== '') {
@@ -421,82 +434,197 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
-        } catch (e) { console.warn('Error parsing extras:', e); }
-
+        } catch (e) {}
         container.innerHTML = html;
     }
 
-    // ========================
-    // COPIAR AL PORTAPAPELES
-    // ========================
+    // =========================================
+    // EVENT LISTENERS
+    // =========================================
+    if (selTipologia) {
+        selTipologia.addEventListener('change', function () {
+            const cfg = configTipologias[this.value] || {};
+            if (selEstatus && cfg.estatus_default) {
+                selEstatus.value = cfg.estatus_default;
+                selEstatus.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            evaluarCampos();
+        });
+    }
+
+    if (selEstatus) {
+        selEstatus.addEventListener('change', function () {
+            const est = this.value;
+            const clienteId = document.getElementById('clienteId')?.value;
+            if (est === 'PAGG') {
+                if (boxPromesas) { boxPromesas.classList.remove('d-none'); boxPromesas.style.display = 'block'; }
+                if (clienteId) cargarPromesasPendientes(clienteId);
+            } else {
+                if (boxPromesas) { boxPromesas.classList.add('d-none'); boxPromesas.style.display = 'none'; }
+                if (inputPromesa) inputPromesa.value = '';
+            }
+            evaluarCampos();
+        });
+    }
+
+    if (btnVerFicha) {
+        btnVerFicha.addEventListener('click', function () {
+            if (modalFicha && window.clienteActual.id) { renderizarFicha(window.clienteActual); modalFicha.show(); }
+        });
+    }
+
+    if (btnVerHistorial) {
+        btnVerHistorial.addEventListener('click', function() {
+            if (window.clienteActual?.id) {
+                cargarUltimasGestiones(window.clienteActual.id);
+                const modalHistorialEl = document.getElementById('modalHistorialGestiones');
+                if (modalHistorialEl) {
+                    const modalHistorial = bootstrap.Modal.getOrCreateInstance(modalHistorialEl);
+                    modalHistorial.show();
+                }
+            }
+        });
+    }
+
     document.addEventListener('click', function(e) {
         const el = e.target.closest('.copyable');
-        if (el) {
-            const text = el.dataset.clipboard;
-            if (text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    const hint = el.querySelector('.copy-hint');
-                    if (hint) {
-                        const original = hint.textContent;
-                        hint.textContent = '✅';
-                        hint.classList.replace('bg-secondary', 'bg-success');
-                        setTimeout(() => { hint.textContent = original; hint.classList.replace('bg-success', 'bg-secondary'); }, 1500);
-                    }
-                });
-            }
+        if (el && el.dataset.clipboard) {
+            navigator.clipboard.writeText(el.dataset.clipboard).then(() => {
+                const hint = el.querySelector('.copy-hint');
+                if (hint) {
+                    const original = hint.textContent;
+                    hint.textContent = '✅'; hint.classList.replace('bg-secondary', 'bg-success');
+                    setTimeout(() => { hint.textContent = original; hint.classList.replace('bg-success', 'bg-secondary'); }, 1500);
+                }
+            }).catch(() => {});
         }
     });
 
-    // Funciones auxiliares
-    window.buscarEnBaseExterna = function() { alert('🔍 Base externa pendiente'); };
-    window.imprimirConsulta = function() { window.print(); };
-    window.cerrarConsulta = function() {
-        document.getElementById('resultadoConsulta').style.display = 'none';
-        document.getElementById('placeholderConsulta').style.display = 'block';
-    };
-});
-// Función para cargar promesas pendientes
-function cargarPromesasPendientes(clienteId) {
-    const box = document.getElementById('box-promesas-pendientes');
-    const lista = document.getElementById('lista-promesas');
-    const input = document.getElementById('inputPromesaSeleccionada');
-    
-    box.classList.remove('d-none');
-    lista.innerHTML = '<small class="text-secondary">⏳ Cargando promesas...</small>';
-    input.value = '';
+    // =========================================
+    // FUNCIONES GLOBALES
+    // =========================================
+    window.abrirModalGestion = function (idCliente, nombre, dpi = '', idCartera = null) {
+        window.clienteActual = { id: idCliente, nombre, identificacion: dpi, id_cartera: idCartera };
+        fetch(`?action=get_cliente_detalle&id=${idCliente}`).then(r => r.json()).then(data => {
+            if (data) window.clienteActual = { ...window.clienteActual, ...data };
+        });
 
-    fetch(`?action=get_promesas_pendientes&cliente_id=${clienteId}`)
-        .then(r => r.json())
-        .then(promesas => {
-            lista.innerHTML = '';
-            if (!promesas || promesas.length === 0) {
-                lista.innerHTML = '<small class="text-warning">⚠️ No hay promesas pendientes. Se registrará como pago genérico.</small>';
-                return;
-            }
-            promesas.forEach(p => {
-                lista.innerHTML += `
-                    <div class="form-check mb-1">
-                        <input class="form-check-input" type="radio" name="id_promesa_seleccionada" value="${p.id}" id="prom_${p.id}">
-                        <label class="form-check-label text-secondary small" for="prom_${p.id}">
-                            💰 <strong>Q${parseFloat(p.monto_prometido).toFixed(2)}</strong> | Vence: ${new Date(p.fecha_compromiso).toLocaleDateString('es-GT')}
-                        </label>
-                    </div>`;
+        const form = document.getElementById('formGestion');
+        if (form) form.reset();
+        document.getElementById('lblCliente').textContent = nombre;
+        document.getElementById('clienteId').value = idCliente;
+        if (divFecha) divFecha.classList.add('d-none');
+        if (boxMonto) boxMonto.classList.add('d-none');
+        if (boxPromesas) { boxPromesas.classList.add('d-none'); boxPromesas.style.display = 'none'; }
+        if (listaPromesas) listaPromesas.innerHTML = '';
+        if (containerExtras) containerExtras.innerHTML = '';
+
+        if (selTipologia) {
+            fetch(`?action=get_tipologias&cliente_id=${idCliente}`).then(r => r.json()).then(data => {
+                selTipologia.innerHTML = '<option value="">Seleccione...</option>';
+                if (Array.isArray(data)) data.forEach(t => {
+                    selTipologia.innerHTML += `<option value="${t.id}">${t.padre_id ? '↳ ' : ''}${t.nombre}</option>`;
+                });
+                evaluarCampos();
             });
-        })
-        .catch(() => lista.innerHTML = '<small class="text-danger">⚠️ Error cargando promesas</small>');
-}
+        }
+        if (idCartera && containerExtras) {
+            containerExtras.innerHTML = '<small>⏳ Cargando...</small>';
+            fetch(`?action=get_extras_gestion&cartera_id=${idCartera}`).then(r => r.json()).then(extras => {
+                containerExtras.innerHTML = '';
+                if (Array.isArray(extras)) extras.forEach(ex => {
+                    containerExtras.innerHTML += `<div class="col-md-6"><label class="form-label small text-secondary">${ex.etiqueta}</label><input type="text" name="extra_${ex.nombre_campo}" class="form-control form-control-sm bg-dark text-white border-secondary"></div>`;
+                });
+            });
+        }
+        modalGestion.show();
+    };
 
-// Modifica tu listener de estatus actual para incluir esta llamada:
-selEstatus?.addEventListener('change', function() {
-    const est = this.value;
-    const clienteId = document.getElementById('clienteId').value;
+    window.guardarGestion = function () {
+        const form = document.getElementById('formGestion');
+        if (!form || !form.checkValidity()) { if (form) form.reportValidity(); return; }
+        const btn = document.querySelector('#modalGestion .btn-success');
+        if (!btn) return;
+        const original = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = '⏳ Guardando...';
+        fetch('?action=registrar_gestion', { method: 'POST', body: new FormData(form) })
+            .then(r => r.json()).then(res => {
+                btn.disabled = false; btn.innerHTML = original;
+                if (res.success) { modalGestion.hide(); location.reload(); }
+                else alert('❌ ' + (res.message || 'Error'));
+            }).catch(() => { btn.disabled = false; btn.innerHTML = original; alert('❌ Error guardando'); });
+    };
 
-    if (est === 'PAGG' && clienteId) {
-        cargarPromesasPendientes(clienteId);
-    } else {
-        document.getElementById('box-promesas-pendientes').classList.add('d-none');
-        document.getElementById('inputPromesaSeleccionada').value = '';
-    }
-    evaluarCampos(); // Tu función existente
-});
+    // =========================================
+    // ✅ PANEL DE ALERTAS (INSISTENTE: REAPARECE AL RECARGAR)
+    // =========================================
+    (function initAlertasLlamadas() {
+        const panel = document.getElementById('alertas-panel');
+        if (!panel) return;
+
+        function checkAlertas() {
+            fetch('?action=get_proximas_llamadas')
+                .then(r => r.json())
+                .then(alertas => {
+                    alertas.forEach(a => {
+                        // ✅ Solo verifica si ya existe en el DOM (para no duplicar visualmente)
+                        if (!document.getElementById(`alerta-${a.id}`)) {
+                            mostrarAlerta(a);
+                        }
+                    });
+                })
+                .catch(() => {});
+        }
+
+        function mostrarAlerta(a) {
+            const el = document.createElement('div');
+            el.id = `alerta-${a.id}`;
+            el.className = 'alert alert-warning alert-dismissible fade show shadow-lg mb-2 bg-dark text-white border-warning';
+            el.style.animation = 'slideIn 0.4s ease-out';
+            el.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-warning text-dark me-2">📞</span>
+                    <div class="flex-grow-1">
+                        <strong class="d-block">${a.nombre}</strong>
+                        <small class="text-warning">🕐 ${a.hora} | ${a.tipologia}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white mt-2" onclick="event.stopPropagation(); window.cerrarAlerta(${a.id})"></button>
+            `;
+            el.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('btn-close')) {
+                    abrirModalGestion(a.cliente_id, a.nombre);
+                    window.cerrarAlerta(a.id);
+                }
+            });
+            panel.appendChild(el);
+            const toast = new bootstrap.Toast(el, { autohide: false });
+            toast.show();
+        }
+
+        window.cerrarAlerta = function(id) {
+            const el = document.getElementById(`alerta-${id}`);
+            if (el) {
+                el.style.animation = 'slideOut 0.3s ease-in forwards';
+                setTimeout(() => el.remove(), 300);
+            }
+        };
+
+        if (!document.getElementById('alert-animations-style')) {
+            const style = document.createElement('style');
+            style.id = 'alert-animations-style';
+            style.textContent = `
+                @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+                #alertas-panel .alert { cursor: pointer; transition: all 0.2s; }
+                #alertas-panel .alert:hover { box-shadow: 0 0 20px rgba(255, 193, 7, 0.6) !important; transform: scale(1.02); }
+            `;
+            document.head.appendChild(style);
+        }
+
+        setTimeout(checkAlertas, 1000);
+        setInterval(checkAlertas, 30000);
+    })();
+
+}); // ✅ FIN DEL DOMContentLoaded
 </script>

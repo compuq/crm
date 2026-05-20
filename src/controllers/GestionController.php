@@ -18,125 +18,309 @@ class GestionController extends \LEX360\Core\Controller
         exit;
     }
 
-        public function registrarGestion(): void
-    {
-        header('Content-Type: application/json');
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-            exit;
-        }
+public function registrarGestion(): void
+{
+    header('Content-Type: application/json');
 
-        $this->session->requireAuth();
-        $user = $this->session->getUser();
-
-        // 1. Sanitización estricta de datos
-        $clienteId   = (int)($_POST['cliente_id'] ?? 0);
-        $tipologiaId = (int)($_POST['tipologia'] ?? 0);
-        $comentario  = trim($_POST['comentario'] ?? '');
-        $telefono    = substr(trim($_POST['telefono_utilizado'] ?? ''), 0, 20);
-        
-        // ✅ VALIDACIÓN ESTRICTA DE ESTATUS (máx 4 chars, solo valores permitidos)
-        $estatusRaw = strtoupper(trim($_POST['estatus'] ?? ''));
-        $estatusValidos = ['SINC', 'COMP', 'PAGG', 'PAGO'];
-        $estatus = in_array($estatusRaw, $estatusValidos, true) ? $estatusRaw : 'SINC';
-
-        if (!$clienteId || !$tipologiaId || empty($comentario)) {
-            echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
-            exit;
-        }
-
-        try {
-            $this->db->beginTransaction();
-
-            // 2. Validar tipología y configuración
-            $stmtTip = $this->db->prepare("SELECT id, requiere_proxima_fecha, requiere_monto, estatus_default FROM tipologias WHERE id = :id");
-            $stmtTip->execute(['id' => $tipologiaId]);
-            $tipologia = $stmtTip->fetch();
-            if (!$tipologia) {
-                echo json_encode(['success' => false, 'message' => 'Tipología no válida']);
-                exit;
-            }
-
-            // Si no se envió estatus válido, usar el default de la tipología
-            if ($estatus === 'SINC' && isset($tipologia['estatus_default'])) {
-                $estatus = strtoupper(trim($tipologia['estatus_default']));
-                if (!in_array($estatus, $estatusValidos, true)) $estatus = 'SINC';
-            }
-
-            // 3. Manejo de Fecha Próxima Llamada (TIMESTAMP)
-            $fechaProxima = null;
-            $fechaRaw = $_POST['fecha_proxima_llamada'] ?? '';
-            if (!empty(trim($fechaRaw))) {
-                $dt = \DateTime::createFromFormat('Y-m-d\TH:i', trim($fechaRaw));
-                $fechaProxima = $dt ? $dt->format('Y-m-d H:i:s') : null;
-            } elseif ($tipologia['requiere_proxima_fecha']) {
-                echo json_encode(['success' => false, 'message' => '⚠️ Fecha próxima obligatoria para esta tipología']);
-                exit;
-            }
-
-            
-
-            // 4. Capturar extras dinámicos
-            //$jsonExtras = $this->capturarExtras($_POST);//Se agrega id de promesa pendiente
-            // ... justo antes de crear $jsonExtras ...
-            $idPromesaSeleccionada = $_POST['id_promesa_seleccionada'] ?? null;
-
-            // Inyectar en extras
-            $extras = $this->capturarExtras($_POST);
-            $extrasArr = json_decode($extras, true) ?: [];
-            if ($idPromesaSeleccionada) {
-                $extrasArr['id_promesa_aplicada'] = (int)$idPromesaSeleccionada;
-            }
-            $jsonExtras = json_encode($extrasArr, JSON_UNESCAPED_UNICODE);
-
-            // ... sigue tu INSERT en historial con $jsonExtras ...            
-
-            // 5. Insertar en Historial
-            $stmt = $this->db->prepare("
-                INSERT INTO historial (id_cliente, id_usuario, id_tipologia, estatus, comentario, telefono_utilizado, fecha_gestion, fecha_proxima_llamada, data_extras) 
-                VALUES (:cli, :usr, :tip, :est, :com, :tel, NOW(), :fecha, :extras::jsonb)
-            ");
-            $stmt->execute([
-                'cli' => $clienteId, 'usr' => $user['id'], 'tip' => $tipologiaId, 
-                'est' => $estatus, 'com' => $comentario, 'tel' => $telefono, 
-                'fecha' => $fechaProxima, 'extras' => $jsonExtras
-            ]);
-            $historialId = $this->db->lastInsertId();
-
-            // 6. Distribución según Estatus
-            if ($estatus === 'COMP') {
-                $monto = $_POST['monto_gestion'] ?? null;
-                $fechaComp = $_POST['fecha_compromiso'] ?? date('Y-m-d', strtotime('+3 days'));
-                
-                if ($monto) {
-                    $this->db->prepare("INSERT INTO promesas (id_cliente, id_usuario, monto_prometido, fecha_compromiso, estatus, fecha_registro) 
-                                        VALUES (:c, :u, :m, :f, 'pendiente', NOW())")
-                         ->execute(['c'=>$clienteId, 'u'=>$user['id'], 'm'=>floatval($monto), 'f'=>$fechaComp]);
-                }
-            } 
-            elseif ($estatus === 'PAGG') {
-                $monto = $_POST['monto_gestion'] ?? null;
-                if ($monto) {
-                    // ✅ CORRECCIÓN CLAVE: 'PAGG' en lugar de 'pendiente' para respetar varchar(4)
-                    $this->db->prepare("INSERT INTO pagos (id_cliente, monto, fecha_pago, referencia_bancaria, estatus, validado_por, fecha_validacion, id_historial) 
-                                        VALUES (:c, :m, NOW(), :ref, 'PAGG', NULL, NULL,$historialId)")
-                         ->execute(['c'=>$clienteId, 'm'=>floatval($monto), 'ref'=>substr($_POST['referencia_pago'] ?? '', 0, 100)]);
-                }
-            }
-
-            // 7. Actualizar cliente
-            $this->db->prepare("UPDATE clientes SET fecha_ultima_gestion = NOW() WHERE id = :id")->execute(['id'=>$clienteId]);
-            $this->db->commit();
-            echo json_encode(['success' => true, 'message' => '✅ Gestión registrada']);
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log('[LEX360] registrarGestion: ' . $e->getMessage() . ' | estatus_raw=' . ($_POST['estatus'] ?? 'null'));
-            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-        }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Método no permitido'
+        ]);
         exit;
     }
 
+    $this->session->requireAuth();
+    $user = $this->session->getUser();
+
+    $clienteId   = (int)($_POST['cliente_id'] ?? 0);
+    $tipologiaId = (int)($_POST['tipologia'] ?? 0);
+    $comentario  = trim($_POST['comentario'] ?? '');
+    $telefono    = substr(trim($_POST['telefono_utilizado'] ?? ''), 0, 20);
+
+    $estatusRaw = strtoupper(trim($_POST['estatus'] ?? ''));
+
+    $estatusValidos = ['SINC', 'COMP', 'PAGG', 'PAGO'];
+
+    $estatus = in_array($estatusRaw, $estatusValidos, true)
+        ? $estatusRaw
+        : 'SINC';
+
+    if (!$clienteId || !$tipologiaId || empty($comentario)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Datos incompletos'
+        ]);
+        exit;
+    }
+
+    try {
+
+        $this->db->beginTransaction();
+
+        // =====================================================
+        // VALIDAR TIPOLOGÍA
+        // =====================================================
+
+        $stmtTip = $this->db->prepare("
+            SELECT
+                id,
+                requiere_proxima_fecha,
+                requiere_monto,
+                estatus_default
+            FROM tipologias
+            WHERE id = :id
+        ");
+
+        $stmtTip->execute([
+            'id' => $tipologiaId
+        ]);
+
+        $tipologia = $stmtTip->fetch();
+
+        if (!$tipologia) {
+
+            echo json_encode([
+                'success' => false,
+                'message' => 'Tipología no válida'
+            ]);
+
+            exit;
+        }
+
+        if ($estatus === 'SINC' && !empty($tipologia['estatus_default'])) {
+
+            $estatusTmp = strtoupper(trim($tipologia['estatus_default']));
+
+            if (in_array($estatusTmp, $estatusValidos, true)) {
+                $estatus = $estatusTmp;
+            }
+        }
+
+        // =====================================================
+        // FECHA COMPROMISO / PRÓXIMA LLAMADA
+        // =====================================================
+
+        $fechaCompromiso = null;
+
+        $fechaRaw = trim($_POST['fecha_compromiso'] ?? '');
+
+        if (!empty($fechaRaw)) {
+
+            $dt = \DateTime::createFromFormat(
+                'Y-m-d\TH:i',
+                $fechaRaw
+            );
+
+            if ($dt) {
+                $fechaCompromiso = $dt->format('Y-m-d H:i:s');
+            }
+        }
+
+        if (
+            $tipologia['requiere_proxima_fecha']
+            && empty($fechaCompromiso)
+        ) {
+
+            echo json_encode([
+                'success' => false,
+                'message' => '⚠️ Fecha próxima obligatoria'
+            ]);
+
+            exit;
+        }
+
+        // =====================================================
+        // EXTRAS
+        // =====================================================
+
+        $idPromesaSeleccionada = $_POST['id_promesa_seleccionada'] ?? null;
+
+        $extras = $this->capturarExtras($_POST);
+
+        $extrasArr = json_decode($extras, true) ?: [];
+
+        if ($idPromesaSeleccionada) {
+
+            $extrasArr['id_promesa_aplicada']
+                = (int)$idPromesaSeleccionada;
+
+            $this->db
+                ->prepare("
+                    UPDATE promesas
+                    SET estatus = 'cumplida'
+                    WHERE id = :id
+                ")
+                ->execute([
+                    'id' => $idPromesaSeleccionada
+                ]);
+        }
+
+        $jsonExtras = json_encode(
+            $extrasArr,
+            JSON_UNESCAPED_UNICODE
+        );
+
+        // =====================================================
+        // HISTORIAL
+        // =====================================================
+
+        $stmt = $this->db->prepare("
+            INSERT INTO historial (
+                id_cliente,
+                id_usuario,
+                id_tipologia,
+                estatus,
+                comentario,
+                telefono_utilizado,
+                fecha_gestion,
+                fecha_proxima_llamada,
+                data_extras
+            )
+            VALUES (
+                :cli,
+                :usr,
+                :tip,
+                :est,
+                :com,
+                :tel,
+                NOW(),
+                :fecha,
+                :extras::jsonb
+            )
+        ");
+
+        $stmt->execute([
+            'cli'    => $clienteId,
+            'usr'    => $user['id'],
+            'tip'    => $tipologiaId,
+            'est'    => $estatus,
+            'com'    => $comentario,
+            'tel'    => $telefono,
+            'fecha'  => $fechaCompromiso,
+            'extras' => $jsonExtras
+        ]);
+
+        $historialId = $this->db->lastInsertId();
+
+        // =====================================================
+        // PROMESAS
+        // =====================================================
+
+        if ($estatus === 'COMP') {
+
+            $monto = floatval($_POST['monto_gestion'] ?? 0);
+
+            if ($monto > 0) {
+
+                $stmtPromesa = $this->db->prepare("
+                    INSERT INTO promesas (
+                        id_cliente,
+                        id_usuario,
+                        monto_prometido,
+                        fecha_compromiso,
+                        estatus,
+                        fecha_registro
+                    )
+                    VALUES (
+                        :c,
+                        :u,
+                        :m,
+                        :f,
+                        'pendiente',
+                        NOW()
+                    )
+                ");
+
+                $stmtPromesa->execute([
+                    'c' => $clienteId,
+                    'u' => $user['id'],
+                    'm' => $monto,
+                    'f' => $fechaCompromiso
+                ]);
+            }
+        }
+
+        // =====================================================
+        // PAGOS REPORTADOS
+        // =====================================================
+
+        elseif ($estatus === 'PAGG') {
+
+            $monto = floatval($_POST['monto_gestion'] ?? 0);
+
+            if ($monto > 0) {
+
+                $stmtPago = $this->db->prepare("
+                    INSERT INTO pagos (
+                        id_cliente,
+                        monto,
+                        fecha_pago,
+                        referencia_bancaria,
+                        estatus,
+                        validado_por,
+                        fecha_validacion,
+                        id_historial
+                    )
+                    VALUES (
+                        :c,
+                        :m,
+                        NOW(),
+                        :ref,
+                        'PAGG',
+                        NULL,
+                        NULL,
+                        :hist
+                    )
+                ");
+
+                $stmtPago->execute([
+                    'c'    => $clienteId,
+                    'm'    => $monto,
+                    'ref'  => substr($_POST['referencia_pago'] ?? '', 0, 100),
+                    'hist' => $historialId
+                ]);
+            }
+        }
+
+        // =====================================================
+        // ACTUALIZAR CLIENTE
+        // =====================================================
+
+        $this->db
+            ->prepare("
+                UPDATE clientes
+                SET fecha_ultima_gestion = NOW()
+                WHERE id = :id
+            ")
+            ->execute([
+                'id' => $clienteId
+            ]);
+
+        $this->db->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => '✅ Gestión registrada'
+        ]);
+
+    } catch (Exception $e) {
+
+        $this->db->rollBack();
+
+        error_log(
+            '[LEX360] registrarGestion: '
+            . $e->getMessage()
+        );
+
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+
+    exit;
+}
     /**
      * Retorna configuración de tipologías para el frontend (JS)
      * Se llama al cargar la página para evitar async/await
@@ -233,20 +417,141 @@ class GestionController extends \LEX360\Core\Controller
         }
         exit;
     } */
+        /**
+     * Retorna promesas pendientes de un cliente para selección en PAGG
+     */
     public function getPromesasPendientes(): void
     {
         header('Content-Type: application/json');
+        $this->session->requireAuth();
+        
         $clienteId = (int)($_GET['cliente_id'] ?? 0);
         if (!$clienteId) { echo json_encode([]); exit; }
 
-        $stmt = $this->db->prepare("
-            SELECT id, monto_prometido, fecha_compromiso 
-            FROM promesas 
-            WHERE id_cliente = :cid AND estatus = 'pendiente' 
-            ORDER BY fecha_compromiso ASC
-        ");
-        $stmt->execute(['cid' => $clienteId]);
-        echo json_encode($stmt->fetchAll());
+        try {
+            $stmt = $this->db->prepare("
+                SELECT id, monto_prometido, fecha_registro, fecha_compromiso 
+                FROM promesas 
+                WHERE id_cliente = :cid AND estatus = 'pendiente' 
+                ORDER BY fecha_compromiso ASC, fecha_registro ASC
+            ");
+            $stmt->execute(['cid' => $clienteId]);
+            echo json_encode($stmt->fetchAll());
+        } catch (Exception $e) {
+            error_log('[LEX360] getPromesasPendientes: ' . $e->getMessage());
+            echo json_encode([]);
+        }
         exit;
     }
+    /**
+     * Retorna las últimas 5 gestiones de un cliente para el modal de historial
+     */
+    public function getUltimasGestiones(): void
+    {
+        header('Content-Type: application/json');
+        $this->session->requireAuth();
+        
+        $clienteId = (int)($_GET['cliente_id'] ?? 0);
+        if (!$clienteId) { echo json_encode([]); exit; }
+
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    h.id,
+                    h.fecha_gestion,
+                    h.fecha_proxima_llamada,
+                    h.comentario,
+                    h.estatus,
+                    t.nombre as tipologia,
+                    u.nombre as gestor
+                FROM historial h
+                LEFT JOIN tipologias t ON t.id = h.id_tipologia
+                LEFT JOIN usuarios u ON u.id = h.id_usuario
+                WHERE h.id_cliente = :cid
+                ORDER BY h.id DESC
+                LIMIT 5
+            ");
+            $stmt->execute(['cid' => $clienteId]);
+            
+            $gestiones = $stmt->fetchAll();
+            
+            // Formatear fechas para el frontend
+            foreach ($gestiones as &$g) {
+                if ($g['fecha_gestion']) {
+                    $g['fecha_gestion_fmt'] = date('d/m/Y H:i', strtotime($g['fecha_gestion']));
+                }
+                if ($g['fecha_proxima_llamada']) {
+                    $g['fecha_proxima_fmt'] = date('d/m/Y H:i', strtotime($g['fecha_proxima_llamada']));
+                }
+            }
+            
+            echo json_encode($gestiones ?: []);
+            
+        } catch (\Throwable $e) {
+            error_log('[LEX360] getUltimasGestiones: ' . $e->getMessage());
+            echo json_encode([]);
+        }
+        exit;
+    }
+        /**
+     * Retorna llamadas programadas dentro de la ventana ±5 minutos
+     * Excluye si ya se registró una gestión posterior a la fecha programada
+     */
+
+    public function getProximasLlamadas(): void
+    {
+        error_reporting(0);
+        header('Content-Type: application/json');
+        
+        try {
+            $this->session->requireAuth();
+            $user = $this->session->getUser();
+            $userRole = $user['rol'] ?? $user['role'] ?? '';
+
+            // ✅ FORZAR ZONA HORARIA (Ajusta si es necesario)
+            $this->db->exec("SET TIME ZONE 'America/Guatemala'");
+
+            // 📋 CONSULTA BASADA EN PROMESAS (Más limpia)
+            // Busca promesas pendientes cercanas a la hora actual
+            $sql = "SELECT p.id, p.id_cliente, c.nombre, p.fecha_compromiso 
+                    FROM promesas p
+                    JOIN clientes c ON p.id_cliente = c.id
+                    WHERE p.estatus = 'pendiente'
+                      AND p.fecha_compromiso BETWEEN NOW() - INTERVAL '10 minutes' 
+                                                  AND NOW() + INTERVAL '1 hour'";
+            
+            // Opcional: Si es gestor, solo ve sus promesas
+            if ($userRole === 'gestor') {
+                $sql .= " AND p.id_usuario = :usuario_id";
+            }
+            
+            $sql .= " ORDER BY p.fecha_compromiso ASC";
+
+            $stmt = $this->db->prepare($sql);
+            $params = [];
+            if ($userRole === 'gestor') {
+                $params['usuario_id'] = $user['id'] ?? 0;
+            }
+            $stmt->execute($params);
+            
+            $result = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $result[] = [
+                    'id' => $row['id'], // ID de la promesa
+                    'cliente_id' => $row['id_cliente'],
+                    'nombre' => $row['nombre'],
+                    'tipologia' => '💰 Promesa de Pago', // Etiqueta fija
+                    'hora' => date('H:i', strtotime($row['fecha_compromiso']))
+                ];
+            }
+            
+            echo json_encode($result);
+            
+        } catch (Exception $e) {
+            error_log('[LEX360] getProximasLlamadas: ' . $e->getMessage());
+            echo json_encode([]);
+        }
+        exit;
+    }        
+
 }

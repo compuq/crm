@@ -66,6 +66,7 @@ class Router
         'descargar_plantilla_gestiones' => 'GestionController@descargarPlantillaGestiones',
         'importar_gestiones'          => 'GestionController@importarGestiones',
         'get_extras_gestion' => 'ConfigController@getExtrasGestion',
+        'get_ultimas_gestiones' => 'GestionController@getUltimasGestiones',
         //'guardar_extra' => 'ConfigController@guardarExtra',
         'guardar_campo_extra' => 'ConfigController@guardarCampoExtra',
         'configurar_extras'    => 'ConfigController@configurarExtras',
@@ -74,6 +75,12 @@ class Router
         //Detalle de clientes en vista
         'get_cliente_detalle' => 'ClienteController@getDetalle',
         'get_promesas_pendientes' => 'GestionController@getPromesasPendientes',
+        'get_proximas_llamadas' => 'GestionController@getProximasLlamadas',
+        //Reportes
+        // Reportes
+        'reportes_gestiones' => 'ReporteController@verGestiones',
+        'reportes_pagos'     => 'ReporteController@verPagos',
+        'reportes_promesas'  => 'ReporteController@verPromesas',
     ];
 
     public function dispatch(): void
