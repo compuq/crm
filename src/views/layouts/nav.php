@@ -15,7 +15,21 @@
         <ul class="navbar-nav me-auto">
             <li class="nav-item"><a class="nav-link" href="?action=dashboard">🏠 Inicio</a></li>
 
-            
+
+            <!-- ✅ SECCIÓN SOLO PARA ADMIN Y SUPERVISORES -->
+            <?php if (in_array($user['role'] ?? '', ['admin', 'supervisor', 'supervisor_general'])): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        📊 Reportes
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="?action=reportes_gestiones">Gestión de Llamadas</a></li>
+                        <li><a class="dropdown-item" href="?action=reportes_pagos">Validación de Pagos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?action=reportes_promesas">Eficacia de Promesas</a></li>
+                    </ul>
+                </li>
+            <?php endif; ?>            
 
             <!-- MENÚ SEGÚN ROL -->
             <?php if ($user['role'] === 'gestor'): ?>
