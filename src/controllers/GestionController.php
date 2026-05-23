@@ -220,7 +220,8 @@ public function registrarGestion(): void
                         monto_prometido,
                         fecha_compromiso,
                         estatus,
-                        fecha_registro
+                        fecha_registro,
+                        id_historial
                     )
                     VALUES (
                         :c,
@@ -228,7 +229,8 @@ public function registrarGestion(): void
                         :m,
                         :f,
                         'pendiente',
-                        NOW()
+                        NOW(),
+                        :id_historial
                     )
                 ");
 
@@ -236,7 +238,8 @@ public function registrarGestion(): void
                     'c' => $clienteId,
                     'u' => $user['id'],
                     'm' => $monto,
-                    'f' => $fechaCompromiso
+                    'f' => $fechaCompromiso,
+                    'id_historial'=>$historialId
                 ]);
             }
         }
@@ -270,7 +273,7 @@ public function registrarGestion(): void
                         'PAGG',
                         NULL,
                         NULL,
-                        :hist
+                        :id_historial
                     )
                 ");
 
@@ -278,7 +281,7 @@ public function registrarGestion(): void
                     'c'    => $clienteId,
                     'm'    => $monto,
                     'ref'  => substr($_POST['referencia_pago'] ?? '', 0, 100),
-                    'hist' => $historialId
+                    'id_historial' => $historialId
                 ]);
             }
         }

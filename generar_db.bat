@@ -7,7 +7,7 @@ echo ==========================
 
 set PGPASSWORD=C0N3CT4D0
 
-"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" ^
+"C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" ^
 -U postgres ^
 -h localhost ^
 -p 5432 ^

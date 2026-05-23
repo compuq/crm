@@ -78,9 +78,14 @@ class Router
         'get_proximas_llamadas' => 'GestionController@getProximasLlamadas',
         //Reportes
         // Reportes
-        'reportes_gestiones' => 'ReporteController@verGestiones',
-        'reportes_pagos'     => 'ReporteController@verPagos',
-        'reportes_promesas'  => 'ReporteController@verPromesas',
+        'reportes_gestiones' => 'ReporteController@generarReporte',
+        //'reportes_pagos'     => 'ReporteController@verPagos',//Comentada para evitar duplicidad
+        //'reportes_promesas'  => 'ReporteController@verPromesas',//Comentada para evitar duplicidad
+        'reportes_gestiones_excel' => 'ReporteController@exportarGestionesExcel', // ← ¿Está esta línea?
+        'reportes_pagos'           => 'ReporteController@verPagos',
+        'reportes_promesas'        => 'ReporteController@verPromesas',
+        'exportar_pagos_excel'     => 'ReporteController@exportarPagosExcel',
+        'exportar_promesas_excel'  => 'ReporteController@exportarPromesasExcel',
     ];
 
     public function dispatch(): void

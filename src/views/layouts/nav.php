@@ -15,18 +15,46 @@
         <ul class="navbar-nav me-auto">
             <li class="nav-item"><a class="nav-link" href="?action=dashboard">🏠 Inicio</a></li>
 
-
-            <!-- ✅ SECCIÓN SOLO PARA ADMIN Y SUPERVISORES -->
-            <?php if (in_array($user['role'] ?? '', ['admin', 'supervisor', 'supervisor_general'])): ?>
+            <!-- ✅ MENÚ DE REPORTES (VISIBLE SOLO PARA ROLES CON PERMISO) -->
+            <?php 
+            $rol = $user['rol'] ?? $user['role'] ?? '';
+            if (in_array($rol, ['admin', 'supervisor', 'supervisor_general'])): 
+            ?>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownReportes" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         📊 Reportes
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="?action=reportes_gestiones">Gestión de Llamadas</a></li>
-                        <li><a class="dropdown-item" href="?action=reportes_pagos">Validación de Pagos</a></li>
+                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownReportes">
+                        
+                        <!-- Opción 1: Gestión General (Ya existía) -->
+                        <li>
+                            <a class="dropdown-item" href="?action=reportes_gestiones">
+                                📞 Gestión de Llamadas
+                            </a>
+                        </li>
+                        
+                        <!-- Opción 2: Pagos (Nuevo) -->
+                        <li>
+                            <a class="dropdown-item" href="?action=reportes_pagos">
+                                💳 Pagos y Pendientes
+                            </a>
+                        </li>
+                        
+                        <!-- Opción 3: Promesas y Seguimiento (Nuevo) -->
+                        <li>
+                            <a class="dropdown-item" href="?action=reportes_promesas">
+                                Promesas y Seguimiento
+                            </a>
+                        </li>
+                        
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="?action=reportes_promesas">Eficacia de Promesas</a></li>
+                        
+                        <!-- Opción adicional: Panel o Dashboard -->
+                        <li>
+                            <a class="dropdown-item" href="?action=clientes">
+                                🔄 Volver a Gestión
+                            </a>
+                        </li>
                     </ul>
                 </li>
             <?php endif; ?>            
@@ -48,7 +76,6 @@
                     </ul>
                 </li>
                 <li class="nav-item"><a class="nav-link" href="?action=usuarios">👤 Usuarios</a></li>
-                <li class="nav-item"><a class="nav-link" href="?action=reportes">📊 Reportes</a></li>
 
             <?php elseif (in_array($user['role'], ['supervisor_general', 'admin'])): ?>
                 <li class="nav-item"><a class="nav-link" href="?action=clientes">🌐 Operación Global</a></li>
@@ -65,7 +92,6 @@
                 <li class="nav-item"><a class="nav-link" href="?action=backup">💾 Backup</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=configuracion">️ Configuración</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=usuarios">👤 Usuarios</a></li>
-                <li class="nav-item"><a class="nav-link" href="?action=reportes">📊 Reportes</a></li>
             <?php endif; ?>
         </ul>
 
