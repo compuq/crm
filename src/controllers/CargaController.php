@@ -50,7 +50,7 @@ class CargaController extends Controller
         /**
      * Genera y descarga una plantilla CSV con los campos de la cartera seleccionada
      */
-        public function descargarPlantillaGestiones(): void
+    public function descargarPlantillaGestionesOld(): void
     {
         $this->session->requireAuth();
         $excel = new \LEX360\Models\Services\ExcelService();
@@ -73,81 +73,115 @@ class CargaController extends Controller
 
         $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'date']]);
     }
-        public function importarGestiones(): void
-    {
-        $this->session->requireAuth();
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-        
-        $file = $_FILES['archivo_gestiones'] ?? null;
-        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
-            // Mensaje error
-            return;
-        }
 
-        try {
-            $excel = new \LEX360\Models\Services\ExcelService();
-            $rows = $excel->leerXlsx($file['tmp_name']);
-            
-            $this->db->beginTransaction();
-            $insertados = 0;
-            $errores = [];
-
-            foreach ($rows as $linea => $row) {
-                try {
-                    $idCliente = null;
-                    // 1. Buscar Cliente por Identificación
-                    $stmt = $this->db->prepare("SELECT id FROM clientes WHERE identificacion = :id LIMIT 1");
-                    $stmt->execute(['id' => $row['identificacion'] ?? '']);
-                    $cli = $stmt->fetch();
-                    if (!$cli) {
-                        $errores[] = "Fila " . ($linea + 2) . ": Cliente no encontrado.";
-                        continue;
-                    }
-                    $idCliente = $cli['id'];
-
-                    // 2. Buscar Tipología por Nombre
-                    $idTipologia = null;
-                    if (!empty($row['tipologia'])) {
-                        $stmt = $this->db->prepare("SELECT id FROM tipologias WHERE nombre ILIKE :nombre LIMIT 1");
-                        $stmt->execute(['nombre' => $row['tipologia']]);
-                        $tip = $stmt->fetch();
-                        if ($tip) $idTipologia = $tip['id'];
-                    }
-
-                    // 3. Buscar Usuario/Gestor (si viene en archivo)
-                    $idUsuario = $this->session->getUser()['id']; // Por defecto el uploader
-                    if (!empty($row['usuario_gestor'])) {
-                        $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE usuario = :u AND activo=true");
-                        $stmt->execute(['u' => $row['usuario_gestor']]);
-                        $usr = $stmt->fetch();
-                        if ($usr) $idUsuario = $usr['id'];
-                    }
-
-                    // 4. Insertar Historial
-                    $stmt = $this->db->prepare("
-                        INSERT INTO historial (id_cliente, id_usuario, id_tipologia, comentario, fecha_gestion) 
-                        VALUES (:id_cli, :id_usr, :id_tip, :com, :fecha)
-                    ");
-                    $stmt->execute([
-                        'id_cli' => $idCliente,
-                        'id_usr' => $idUsuario,
-                        'id_tip' => $idTipologia,
-                        'com'    => $row['comentario'] ?? '',
-                        'fecha'  => !empty($row['fecha_gestion']) ? $row['fecha_gestion'] : date('Y-m-d H:i:s')
-                    ]);
-                    $insertados++;
-                } catch (\Exception $e) {
-                    $errores[] = "Fila " . ($linea + 2) . ": " . $e->getMessage();
-                }
-            }
-            
-            $this->db->commit();
-            // Redirigir con éxito
-        } catch (\Exception $e) {
-            $this->db->rollBack();
-            // Redirigir con error crítico
-        }
+public function importarGestiones(): void
+{
+    $this->session->requireAuth();
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header("Location: index.php?action=carga_gestiones");
+        exit;
     }
+    
+    $file = $_FILES['archivo_gestiones'] ?? null;
+    if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+        $this->redirigirConMensaje('Error: Archivo inválido o no seleccionado.', 'danger');
+        return;
+    }
+
+    try {
+        $excel = new \LEX360\Models\Services\ExcelService();
+        $rows = $excel->leerXlsx($file['tmp_name']);
+        
+        $this->db->beginTransaction();
+        $insertados = 0;
+        $errores = [];
+
+        foreach ($rows as $linea => $row) {
+            // Ignorar filas vacías
+            if (count(array_filter($row)) === 0) continue;
+            
+            try {
+                // ✅ 1. VALIDAR CAMPO CUENTA (LLAVE OBLIGATORIA)
+                $cuenta = trim($row['cuenta'] ?? '');
+                if (empty($cuenta)) {
+                    $errores[] = "Fila " . ($linea + 2) . ": Falta el campo 'cuenta' (obligatorio).";
+                    continue;
+                }
+
+                // ✅ 2. BUSCAR CLIENTE POR CUENTA
+                $stmt = $this->db->prepare("SELECT id FROM clientes WHERE cuenta = :cuenta LIMIT 1");
+                $stmt->execute(['cuenta' => $cuenta]);
+                $cli = $stmt->fetch();
+
+                if (!$cli) {
+                    $errores[] = "Fila " . ($linea + 2) . ": Cuenta '$cuenta' no encontrada en el sistema.";
+                    continue;
+                }
+                $idCliente = $cli['id'];
+
+                // ✅ 3. BUSCAR TIPOLOGÍA (OPCIONAL)
+                $idTipologia = null;
+                if (!empty($row['tipologia'])) {
+                    $stmt = $this->db->prepare("SELECT id FROM tipologias WHERE nombre ILIKE :nombre LIMIT 1");
+                    $stmt->execute(['nombre' => trim($row['tipologia'])]);
+                    $tip = $stmt->fetch();
+                    if ($tip) $idTipologia = $tip['id'];
+                }
+
+                // ✅ 4. BUSCAR GESTOR (OPCIONAL - por defecto el usuario actual)
+                $idUsuario = $this->session->getUser()['id'];
+                if (!empty($row['usuario_gestor'])) {
+                    $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE usuario = :u AND activo = true");
+                    $stmt->execute(['u' => trim($row['usuario_gestor'])]);
+                    $usr = $stmt->fetch();
+                    if ($usr) $idUsuario = $usr['id'];
+                }
+
+                // ✅ 5. INSERTAR EN HISTORIAL
+                $stmt = $this->db->prepare("
+                    INSERT INTO historial (
+                        id_cliente, id_usuario, id_tipologia, 
+                        comentario, fecha_gestion, telefono_utilizado
+                    ) VALUES (
+                        :id_cli, :id_usr, :id_tip, :com, :fecha, :tel
+                    )
+                ");
+                $stmt->execute([
+                    'id_cli' => $idCliente,
+                    'id_usr' => $idUsuario,
+                    'id_tip' => $idTipologia,
+                    'com'    => trim($row['comentario'] ?? ''),
+                    'fecha'  => !empty($row['fecha_gestion']) ? $row['fecha_gestion'] : date('Y-m-d H:i:s'),
+                    'tel'    => trim($row['telefono_utilizado'] ?? '')
+                ]);
+                $insertados++;
+                
+            } catch (\Exception $e) {
+                $errores[] = "Fila " . ($linea + 2) . ": " . $e->getMessage();
+            }
+        }
+        
+        $this->db->commit();
+        
+        // ✅ REDIRECCIÓN CON MENSAJE
+        $msg = "✅ Carga exitosa: $insertados gestiones importadas.";
+        if (!empty($errores)) {
+            $msg .= "<br>⚠️ {$errores['total_errores']} errores: <ul class='mb-0 mt-1 small'>";
+            foreach (array_slice($errores, 0, 5) as $err) { // Mostrar solo primeros 5 errores
+                $msg .= "<li>" . htmlspecialchars($err) . "</li>";
+            }
+            if (count($errores) > 5) $msg .= "<li>... y " . (count($errores) - 5) . " más</li>";
+            $msg .= "</ul>";
+        }
+        $this->redirigirConMensaje($msg, 'success');
+        
+    } catch (\Exception $e) {
+        $this->db->rollBack();
+        error_log("[LEX360] Error importarGestiones: " . $e->getMessage());
+        $this->redirigirConMensaje("❌ Error crítico: " . htmlspecialchars($e->getMessage()), 'danger');
+    }
+}    
 
 public function descargarPlantilla(): void
 {
@@ -310,5 +344,28 @@ public function descargarPlantilla(): void
             $this->redirigirConMensaje("❌ Error del sistema: " . htmlspecialchars($e->getMessage()), 'danger');
         }
     }
+    public function descargarPlantillaGestiones(): void
+    {
+        $this->session->requireAuth();
+        $excel = new \LEX360\Models\Services\ExcelService();
+        
+        // ✅ AGREGAMOS 'cuenta' como la primera columna esencial
+        $headers = [
+            'cuenta' => 'cuenta', // <--- NUEVO: Clave primaria para buscar
+            'fecha_gestion' => 'fecha_gestion',
+            'tipologia' => 'tipologia',
+            'comentario' => 'comentario',
+            'usuario_gestor' => 'usuario_gestor'
+        ];
 
+        $ejemplo = [
+            'cuenta' => 'VISA-001234',   // <--- EJEMPLO ACTUALIZADO
+            'fecha_gestion' => date('Y-m-d H:i:s'),
+            'tipologia' => 'Contacto Exitoso',
+            'comentario' => 'Cliente confirma deuda.',
+            'usuario_gestor' => 'juan.perez'
+        ];
+
+        $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'date']]);
+    }
 }

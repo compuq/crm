@@ -15,10 +15,14 @@
         <ul class="navbar-nav me-auto">
             <li class="nav-item"><a class="nav-link" href="?action=dashboard">🏠 Inicio</a></li>
 
+<?php if (in_array($user['role'], ['admin', 'supervisor_general'])): ?>
+    <li><a class="dropdown-item" href="?action=configuracion#tab-tipologias">📋 Tipologías</a></li>
+<?php endif; ?>            
+
             <!-- ✅ MENÚ DE REPORTES (VISIBLE SOLO PARA ROLES CON PERMISO) -->
             <?php 
             $rol = $user['rol'] ?? $user['role'] ?? '';
-            if (in_array($rol, ['admin', 'supervisor', 'supervisor_general'])): 
+            if (in_array($rol, ['admin', 'supervisor', 'supervisor_general','gestor'])): 
             ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownReportes" role="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -29,6 +29,10 @@ class CsvService
      *   Fila 4+: Datos reales de clientes
      */
 
+    /**
+     * Importa clientes desde archivo XLSX (PhpSpreadsheet)
+     * Basado en CAMPO CUENTA (llave única por contrato/deuda)
+     */
     public function importarClientes(string $filePath, int $carteraId, int $uploadedByUserId, array $uploadedByUser = null): array
     {
         $this->db->beginTransaction();
@@ -86,10 +90,30 @@ class CsvService
             $missing = array_diff($required, array_values($headersMap));
             if (!empty($missing)) throw new \Exception("Faltan columnas obligatorias: " . implode(', ', $missing));
 
-            // ✅ SQL ACTUALIZADO: Se agrega id_supervisor_cadena
-            $stmtCliente = $this->db->prepare("
-                INSERT INTO clientes (id_cartera, id_gestor_asignado, id_supervisor_cadena, cuenta, nombre, identificacion, saldo, telefono_1, telefono_2, data_extras)
-                VALUES (:id_cartera, :id_gestor_asignado, :id_supervisor_cadena, :cuenta, :nombre, :identificacion, :saldo, :telefono_1, :telefono_2, :data_extras)
+            // ✅ PREPARAR STATEMENT UPSERT (fuera del bucle para rendimiento)
+            $stmtUpsert = $this->db->prepare("
+                INSERT INTO clientes (
+                    id_cartera, id_gestor_asignado, id_supervisor_cadena,
+                    cuenta, nombre, identificacion, saldo,
+                    telefono_1, telefono_2, data_extras
+                ) VALUES (
+                    :id_cartera, :id_gestor_asignado, :id_supervisor_cadena,
+                    :cuenta, :nombre, :identificacion, :saldo,
+                    :telefono_1, :telefono_2, :data_extras
+                )
+                ON CONFLICT (cuenta) 
+                DO UPDATE SET 
+                    nombre = EXCLUDED.nombre,
+                    identificacion = EXCLUDED.identificacion,
+                    saldo = EXCLUDED.saldo,
+                    telefono_1 = EXCLUDED.telefono_1,
+                    telefono_2 = EXCLUDED.telefono_2,
+                    data_extras = EXCLUDED.data_extras,
+                    id_cartera = EXCLUDED.id_cartera,
+                    id_gestor_asignado = EXCLUDED.id_gestor_asignado,
+                    id_supervisor_cadena = EXCLUDED.id_supervisor_cadena,
+                    fecha_actualizacion = NOW()
+                RETURNING id
             ");
 
             $insertados = 0;
@@ -120,15 +144,15 @@ class CsvService
                     }
                     if ($isJunk) continue;
 
-                    if (empty($vals['identificacion'])) {
-                        $errores[] = "Línea $excelRow: Identificación vacía.";
+                    // ✅ VALIDAR QUE CUENTA NO ESTÉ VACÍA (AHORA ES LA LLAVE)
+                    if (empty($vals['cuenta'])) {
+                        $errores[] = "Línea $excelRow: Campo 'cuenta' vacío (es obligatorio).";
                         continue;
                     }
 
                     // Resolver Gestor
                     $idGestor = null;
                     if (!empty($vals['gestor_usuario'])) {
-                        // Ignorar si parece un label (ej: "Gestor Asignado")
                         if (strpos(strtolower($vals['gestor_usuario']), 'gestor') === false) {
                              $stmtG = $this->db->prepare("SELECT id, supervisor_id FROM usuarios WHERE usuario = :u AND activo = true AND rol = 'gestor'");
                              $stmtG->execute(['u' => $vals['gestor_usuario']]);
@@ -142,18 +166,17 @@ class CsvService
                     $idAsignado = $idGestor ?? (!empty($_POST['id_gestor_asignado']) ? (int)$_POST['id_gestor_asignado'] : $uploadedByUserId);
 
                     // 🔍 OBTENER SUPERVISOR DE LA CADENA
-                    // Buscamos el supervisor_id del usuario asignado
                     $stmtSuper = $this->db->prepare("SELECT supervisor_id FROM usuarios WHERE id = :id");
                     $stmtSuper->execute(['id' => $idAsignado]);
                     $superData = $stmtSuper->fetch();
                     $idSupervisor = $superData ? $superData['supervisor_id'] : null;
 
-                    // Datos Base
+                    // ✅ DATOS PARA UPSERT
                     $data = [
                         'id_cartera' => $carteraId,
                         'id_gestor_asignado' => $idAsignado,
-                        'id_supervisor_cadena' => $idSupervisor, // ✅ FIX: Se asigna el supervisor
-                        'cuenta' => $vals['cuenta'],
+                        'id_supervisor_cadena' => $idSupervisor,
+                        'cuenta' => strtoupper(trim($vals['cuenta'])), // ✅ Normalizar cuenta
                         'nombre' => $vals['nombre'],
                         'identificacion' => (string)$vals['identificacion'],
                         'saldo' => floatval(preg_replace('/[^0-9.]/', '', $vals['saldo'] ?? '0')),
@@ -161,9 +184,9 @@ class CsvService
                         'telefono_2' => $vals['telefono_2'] ?: null,
                     ];
 
-                    // Extras Dinámicos (email, direccion, tasa_interes, etc. -> JSON)
+                    // Extras Dinámicos -> JSON
                     $extras = [];
-                    $basePlusGestor = [...$baseColumns, 'gestor_usuario'];
+                    $basePlusGestor = ['cuenta', 'nombre', 'identificacion', 'saldo', 'telefono_1', 'telefono_2', 'gestor_usuario'];
                     foreach ($vals as $k => $v) {
                         if (!in_array($k, $basePlusGestor) && $v !== '') {
                             $extras[$k] = $v;
@@ -171,21 +194,32 @@ class CsvService
                     }
                     $data['data_extras'] = !empty($extras) ? json_encode($extras, JSON_UNESCAPED_UNICODE) : null;
 
-                    $stmtCliente->execute($data);
+                    // ✅ EJECUTAR UPSERT
+                    $stmtUpsert->execute($data);
                     $insertados++;
+
                 } catch (\Exception $e) {
                     $errores[] = "Línea $excelRow: " . $e->getMessage();
                 }
             }
 
             $this->db->commit();
-            return ['success' => true, 'insertados' => $insertados, 'errores' => $errores, 'total_errores' => count($errores)];
+            return [
+                'success' => true,
+                'insertados' => $insertados,
+                'errores' => $errores,
+                'total_errores' => count($errores)
+            ];
 
         } catch (\Exception $e) {
             $this->db->rollBack();
-            return ['success' => false, 'errores' => ["Error crítico: " . $e->getMessage()]];
+            return [
+                'success' => false,
+                'errores' => ["Error crítico: " . $e->getMessage()]
+            ];
         }
-    }        
+    }            
+        
     private function prepareInsertCliente(): \PDOStatement
     {
         $sql = "INSERT INTO clientes (id_cartera, id_gestor_asignado, id_supervisor_cadena, cuenta, identificacion, nombre, saldo, telefono_1, telefono_2, id_empresa, estado) 
