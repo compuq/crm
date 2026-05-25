@@ -15,10 +15,6 @@
         <ul class="navbar-nav me-auto">
             <li class="nav-item"><a class="nav-link" href="?action=dashboard">🏠 Inicio</a></li>
 
-<?php if (in_array($user['role'], ['admin', 'supervisor_general'])): ?>
-    <li><a class="dropdown-item" href="?action=configuracion#tab-tipologias">📋 Tipologías</a></li>
-<?php endif; ?>            
-
             <!-- ✅ MENÚ DE REPORTES (VISIBLE SOLO PARA ROLES CON PERMISO) -->
             <?php 
             $rol = $user['rol'] ?? $user['role'] ?? '';

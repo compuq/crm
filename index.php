@@ -1,9 +1,19 @@
 <?php
 
-
-
 require_once 'vendor/autoload.php';
 require_once 'config/config.php';
+
+// ===================================================================
+// ✅ OPTIMIZACIÓN PARA REPORTES MASIVOS Y EXPORTACIONES
+// ===================================================================
+// Permitir que PHP use más memoria (1GB) para que PhpSpreadsheet no colapse
+ini_set('memory_limit', '1024M'); 
+
+// Eliminar el límite de tiempo de ejecución. El script correrá 
+// hasta que termine la consulta y genere el Excel.
+set_time_limit(0); 
+// ===================================================================
+
 
 use LEX360\Core\Router;
 

@@ -305,7 +305,7 @@ public function descargarPlantilla(): void
         }
 
         try {
-            $service = new \LEX360\Models\Services\CsvService();
+            $service = new CsvService();
             
             // Pasar usuario completo para validar jerarquía de gestores
             $resultado = $service->importarClientes(

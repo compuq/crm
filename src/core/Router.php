@@ -86,8 +86,14 @@ class Router
         'reportes_promesas'        => 'ReporteController@verPromesas',
         'exportar_pagos_excel'     => 'ReporteController@exportarPagosExcel',
         'exportar_promesas_excel'  => 'ReporteController@exportarPromesasExcel',
+        // Backup y Histórico
+        'backup'                => 'BackupController@index',
+        'migrar_historico'      => 'BackupController@migrar',
+        'consultar_historico'   => 'BackupController@consultarHistorico',
+        'restaurar_historico'   => 'BackupController@restaurar',          // NUEVO
+        'ver_historial_cliente' => 'BackupController@verHistorialCliente', // NUEVO
+        'exportar_historico'    => 'BackupController@exportarHistorico',   // NUEVO
     ];
-
     public function dispatch(): void
     {
         $action = $_GET['action'] ?? 'login';
