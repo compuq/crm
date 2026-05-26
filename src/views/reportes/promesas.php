@@ -56,6 +56,7 @@
             <div class="col-md-2">
                 <label class="text-secondary small">Estado</label>
                 <select name="estatus_pago" class="form-select bg-dark text-white border-secondary">
+                    
                     <option value="ambos" <?= $filters['estatus_pago']=='ambos'?'selected':'' ?>>Ambos</option>
                     <option value="PAGG" <?= $filters['estatus_pago']=='PAGG'?'selected':'' ?>>Pendientes</option>
                     <option value="PAGO" <?= $filters['estatus_pago']=='PAGO'?'selected':'' ?>>Confirmados</option>

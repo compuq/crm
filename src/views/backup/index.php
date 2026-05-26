@@ -316,36 +316,5 @@ function ejecutarMigracion() {
             }
         });
 }
-function ejecutarMigracion() {
-    const seleccionados = Array.from(document.querySelectorAll('.cliente-check:checked')).map(cb => cb.value);
-    
-    console.log('🔍 IDs seleccionados:', seleccionados); // ← DEBUG
-    
-    if (seleccionados.length === 0) return alert('⚠️ Seleccione al menos un cliente.');
-    
-    const formData = new FormData();
-    formData.append('ids', JSON.stringify(seleccionados));
-    
-    // Debug: ver contenido del FormData
-    for (let [key, value] of formData.entries()) {
-        console.log(`📦 FormData - ${key}:`, value);
-    }
-    
-    fetch('?action=migrar_historico', { 
-        method: 'POST', 
-        body: formData 
-    })
-    .then(r => {
-        console.log('📡 Response status:', r.status);
-        return r.json();
-    })
-    .then(res => {
-        console.log('✅ Response:', res);
-        // ... resto del código
-    })
-    .catch(err => {
-        console.error('❌ Error de conexión:', err);
-        alert('❌ Error de conexión');
-    });
-}
+
 </script>

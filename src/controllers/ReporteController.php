@@ -46,7 +46,7 @@ class ReporteController extends Controller
                 c.identificacion,
 
                 u.nombre as gestor_nombre,
-
+                super.nombre as supervisor_nombre,
                 t.nombre as tipologia_nombre,
 
                 CASE
@@ -62,6 +62,9 @@ class ReporteController extends Controller
 
             JOIN usuarios u
                 ON u.id = h.id_usuario
+
+            JOIN usuarios super
+                ON super.id = c.id_supervisor_cadena
 
             LEFT JOIN tipologias t
                 ON t.id = h.id_tipologia
@@ -520,7 +523,7 @@ class ReporteController extends Controller
             'supervisor_id'   => ($rol === 'admin' || $rol === 'supervisor_general') ? ($_GET['supervisor_id'] ?? '') : '',
             'usuario_id'      => in_array($rol, ['admin', 'supervisor', 'supervisor_general']) ? ($_GET['usuario_id'] ?? '') : '',
             'cartera_id'      => in_array($rol, ['admin', 'supervisor']) ? ($_GET['cartera_id'] ?? '') : '',
-            'estatus_promesa' => $_GET['estatus_promesa'] ?? 'pendiente',
+            'estatus_promesa' => $_GET['estatus_promesa'] ?? 'ambas',
             'llamadas'        => $_GET['llamadas'] ?? 'todas',
         ];
 

@@ -17,7 +17,9 @@
                 <option value="gestor" <?= ($_GET['rol'] ?? '') === 'gestor' ? 'selected' : '' ?>>Gestores</option>
                 <option value="supervisor" <?= ($_GET['rol'] ?? '') === 'supervisor' ? 'selected' : '' ?>>Supervisores</option>
                 <option value="supervisor_general" <?= ($_GET['rol'] ?? '') === 'supervisor_general' ? 'selected' : '' ?>>Sup. General</option>
+                <?php if (in_array($this->session->getUser()['role'], ['admin'])): ?>
                 <option value="admin" <?= ($_GET['rol'] ?? '') === 'admin' ? 'selected' : '' ?>>Admin</option>
+                <?php endif;?>
             </select>
         </div>
         <div class="col-md-3">
@@ -44,6 +46,9 @@
         </thead>
         <tbody>
             <?php foreach($usuarios as $u):
+                if ($u['rol']=='admin' && $this->session->getUser()['role']!=='admin'){
+                    continue;
+                }
                 $supNombre = $u['supervisor_id'] ? ($this->db->query("SELECT nombre FROM usuarios WHERE id = {$u['supervisor_id']}")->fetchColumn() ?: '-') : '-';
             ?>
             <tr>
@@ -97,7 +102,9 @@
                             <option value="gestor">Gestor</option>
                             <option value="supervisor">Supervisor</option>
                             <option value="supervisor_general">Supervisor General</option>
+                            <?php if($this->session->getUser()['role']=='admin'):?>
                             <option value="admin">Administrador</option>
+                            <?php endif;?>
                         </select>
                     </div>
                     <div class="mb-3" id="div-supervisor" style="display:none;">

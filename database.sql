@@ -5,7 +5,7 @@
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 17.2
 
--- Started on 2026-05-23 20:50:05
+-- Started on 2026-05-25 04:26:28
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -28,7 +28,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 
 --
--- TOC entry 5129 (class 0 OID 0)
+-- TOC entry 5153 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
@@ -45,7 +45,7 @@ CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
 
 
 --
--- TOC entry 5130 (class 0 OID 0)
+-- TOC entry 5154 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: 
 --
@@ -97,7 +97,7 @@ CREATE SEQUENCE public.carteras_id_seq
 ALTER SEQUENCE public.carteras_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5131 (class 0 OID 0)
+-- TOC entry 5155 (class 0 OID 0)
 -- Dependencies: 221
 -- Name: carteras_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -153,7 +153,8 @@ CREATE TABLE public.clientes_bk (
     telefono_1 character varying(20),
     telefono_2 character varying(20),
     estado character varying(20),
-    fecha_ultima_gestion timestamp with time zone
+    fecha_ultima_gestion timestamp with time zone,
+    data_extras jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -176,7 +177,7 @@ CREATE SEQUENCE public.clientes_bk_id_bk_seq
 ALTER SEQUENCE public.clientes_bk_id_bk_seq OWNER TO postgres;
 
 --
--- TOC entry 5132 (class 0 OID 0)
+-- TOC entry 5156 (class 0 OID 0)
 -- Dependencies: 241
 -- Name: clientes_bk_id_bk_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -201,7 +202,7 @@ CREATE SEQUENCE public.clientes_id_seq
 ALTER SEQUENCE public.clientes_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5133 (class 0 OID 0)
+-- TOC entry 5157 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: clientes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -241,7 +242,7 @@ CREATE SEQUENCE public.data_extras_id_seq
 ALTER SEQUENCE public.data_extras_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5134 (class 0 OID 0)
+-- TOC entry 5158 (class 0 OID 0)
 -- Dependencies: 231
 -- Name: data_extras_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -303,7 +304,7 @@ CREATE SEQUENCE public.extras_cartera_id_seq
 ALTER SEQUENCE public.extras_cartera_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5135 (class 0 OID 0)
+-- TOC entry 5159 (class 0 OID 0)
 -- Dependencies: 249
 -- Name: extras_cartera_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -343,7 +344,7 @@ CREATE SEQUENCE public.extras_historial_id_seq
 ALTER SEQUENCE public.extras_historial_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5136 (class 0 OID 0)
+-- TOC entry 5160 (class 0 OID 0)
 -- Dependencies: 235
 -- Name: extras_historial_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -368,7 +369,7 @@ CREATE SEQUENCE public.extras_id_seq
 ALTER SEQUENCE public.extras_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5137 (class 0 OID 0)
+-- TOC entry 5161 (class 0 OID 0)
 -- Dependencies: 223
 -- Name: extras_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -415,7 +416,9 @@ CREATE TABLE public.historial_bk (
     estatus character varying(4),
     telefono_utilizado character varying(20),
     id_tipologia integer,
-    comentario text
+    comentario text,
+    data_extras jsonb DEFAULT '{}'::jsonb,
+    fecha_proxima_llamada timestamp without time zone
 );
 
 
@@ -438,7 +441,7 @@ CREATE SEQUENCE public.historial_bk_id_bk_seq
 ALTER SEQUENCE public.historial_bk_id_bk_seq OWNER TO postgres;
 
 --
--- TOC entry 5138 (class 0 OID 0)
+-- TOC entry 5162 (class 0 OID 0)
 -- Dependencies: 243
 -- Name: historial_bk_id_bk_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -463,7 +466,7 @@ CREATE SEQUENCE public.historial_id_seq
 ALTER SEQUENCE public.historial_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5139 (class 0 OID 0)
+-- TOC entry 5163 (class 0 OID 0)
 -- Dependencies: 233
 -- Name: historial_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -505,7 +508,7 @@ CREATE SEQUENCE public.logs_asistencia_id_seq
 ALTER SEQUENCE public.logs_asistencia_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5140 (class 0 OID 0)
+-- TOC entry 5164 (class 0 OID 0)
 -- Dependencies: 247
 -- Name: logs_asistencia_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -550,7 +553,7 @@ CREATE SEQUENCE public.logs_auditoria_id_seq
 ALTER SEQUENCE public.logs_auditoria_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5141 (class 0 OID 0)
+-- TOC entry 5165 (class 0 OID 0)
 -- Dependencies: 245
 -- Name: logs_auditoria_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -593,7 +596,7 @@ CREATE SEQUENCE public.lotes_id_seq
 ALTER SEQUENCE public.lotes_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5142 (class 0 OID 0)
+-- TOC entry 5166 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: lotes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -623,6 +626,54 @@ CREATE TABLE public.pagos (
 ALTER TABLE public.pagos OWNER TO postgres;
 
 --
+-- TOC entry 252 (class 1259 OID 65548)
+-- Name: pagos_bk; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pagos_bk (
+    id_bk integer NOT NULL,
+    id_original integer,
+    lote_id integer,
+    fecha_migracion timestamp with time zone DEFAULT now(),
+    id_cliente integer,
+    monto numeric(15,2),
+    fecha_pago timestamp without time zone,
+    referencia_bancaria character varying(100),
+    estatus character varying(4),
+    validado_por integer,
+    fecha_validacion timestamp with time zone,
+    id_historial integer
+);
+
+
+ALTER TABLE public.pagos_bk OWNER TO postgres;
+
+--
+-- TOC entry 251 (class 1259 OID 65547)
+-- Name: pagos_bk_id_bk_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.pagos_bk_id_bk_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.pagos_bk_id_bk_seq OWNER TO postgres;
+
+--
+-- TOC entry 5167 (class 0 OID 0)
+-- Dependencies: 251
+-- Name: pagos_bk_id_bk_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.pagos_bk_id_bk_seq OWNED BY public.pagos_bk.id_bk;
+
+
+--
 -- TOC entry 239 (class 1259 OID 25167)
 -- Name: pagos_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -639,7 +690,7 @@ CREATE SEQUENCE public.pagos_id_seq
 ALTER SEQUENCE public.pagos_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5143 (class 0 OID 0)
+-- TOC entry 5168 (class 0 OID 0)
 -- Dependencies: 239
 -- Name: pagos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -668,6 +719,53 @@ CREATE TABLE public.promesas (
 ALTER TABLE public.promesas OWNER TO postgres;
 
 --
+-- TOC entry 254 (class 1259 OID 65556)
+-- Name: promesas_bk; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.promesas_bk (
+    id_bk integer NOT NULL,
+    id_original integer,
+    lote_id integer,
+    fecha_migracion timestamp with time zone DEFAULT now(),
+    id_cliente integer,
+    id_usuario integer,
+    monto_prometido numeric(15,2),
+    fecha_compromiso timestamp without time zone,
+    fecha_registro timestamp with time zone,
+    estatus character varying(20),
+    id_historial integer
+);
+
+
+ALTER TABLE public.promesas_bk OWNER TO postgres;
+
+--
+-- TOC entry 253 (class 1259 OID 65555)
+-- Name: promesas_bk_id_bk_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.promesas_bk_id_bk_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.promesas_bk_id_bk_seq OWNER TO postgres;
+
+--
+-- TOC entry 5169 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: promesas_bk_id_bk_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.promesas_bk_id_bk_seq OWNED BY public.promesas_bk.id_bk;
+
+
+--
 -- TOC entry 237 (class 1259 OID 25147)
 -- Name: promesas_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -684,7 +782,7 @@ CREATE SEQUENCE public.promesas_id_seq
 ALTER SEQUENCE public.promesas_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5144 (class 0 OID 0)
+-- TOC entry 5170 (class 0 OID 0)
 -- Dependencies: 237
 -- Name: promesas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -731,7 +829,7 @@ CREATE SEQUENCE public.tipologias_id_seq
 ALTER SEQUENCE public.tipologias_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5145 (class 0 OID 0)
+-- TOC entry 5171 (class 0 OID 0)
 -- Dependencies: 225
 -- Name: tipologias_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -777,7 +875,7 @@ CREATE SEQUENCE public.usuarios_id_seq
 ALTER SEQUENCE public.usuarios_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5146 (class 0 OID 0)
+-- TOC entry 5172 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: usuarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -786,7 +884,7 @@ ALTER SEQUENCE public.usuarios_id_seq OWNED BY public.usuarios.id;
 
 
 --
--- TOC entry 4817 (class 2604 OID 24998)
+-- TOC entry 4827 (class 2604 OID 24998)
 -- Name: carteras id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -794,7 +892,7 @@ ALTER TABLE ONLY public.carteras ALTER COLUMN id SET DEFAULT nextval('public.car
 
 
 --
--- TOC entry 4834 (class 2604 OID 25051)
+-- TOC entry 4844 (class 2604 OID 25051)
 -- Name: clientes id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -802,7 +900,7 @@ ALTER TABLE ONLY public.clientes ALTER COLUMN id SET DEFAULT nextval('public.cli
 
 
 --
--- TOC entry 4849 (class 2604 OID 25189)
+-- TOC entry 4859 (class 2604 OID 25189)
 -- Name: clientes_bk id_bk; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -810,7 +908,7 @@ ALTER TABLE ONLY public.clientes_bk ALTER COLUMN id_bk SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 4839 (class 2604 OID 25085)
+-- TOC entry 4849 (class 2604 OID 25085)
 -- Name: data_extras id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -818,7 +916,7 @@ ALTER TABLE ONLY public.data_extras ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
--- TOC entry 4824 (class 2604 OID 25007)
+-- TOC entry 4834 (class 2604 OID 25007)
 -- Name: extras id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -826,7 +924,7 @@ ALTER TABLE ONLY public.extras ALTER COLUMN id SET DEFAULT nextval('public.extra
 
 
 --
--- TOC entry 4857 (class 2604 OID 32780)
+-- TOC entry 4869 (class 2604 OID 32780)
 -- Name: extras_cartera id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -834,7 +932,7 @@ ALTER TABLE ONLY public.extras_cartera ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 4843 (class 2604 OID 25137)
+-- TOC entry 4853 (class 2604 OID 25137)
 -- Name: extras_historial id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -842,7 +940,7 @@ ALTER TABLE ONLY public.extras_historial ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 4840 (class 2604 OID 25106)
+-- TOC entry 4850 (class 2604 OID 25106)
 -- Name: historial id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -850,7 +948,7 @@ ALTER TABLE ONLY public.historial ALTER COLUMN id SET DEFAULT nextval('public.hi
 
 
 --
--- TOC entry 4851 (class 2604 OID 25202)
+-- TOC entry 4862 (class 2604 OID 25202)
 -- Name: historial_bk id_bk; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -858,7 +956,7 @@ ALTER TABLE ONLY public.historial_bk ALTER COLUMN id_bk SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4855 (class 2604 OID 25232)
+-- TOC entry 4867 (class 2604 OID 25232)
 -- Name: logs_asistencia id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -866,7 +964,7 @@ ALTER TABLE ONLY public.logs_asistencia ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4853 (class 2604 OID 25217)
+-- TOC entry 4865 (class 2604 OID 25217)
 -- Name: logs_auditoria id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -874,7 +972,7 @@ ALTER TABLE ONLY public.logs_auditoria ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 4830 (class 2604 OID 25034)
+-- TOC entry 4840 (class 2604 OID 25034)
 -- Name: lotes id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -882,7 +980,7 @@ ALTER TABLE ONLY public.lotes ALTER COLUMN id SET DEFAULT nextval('public.lotes_
 
 
 --
--- TOC entry 4847 (class 2604 OID 25171)
+-- TOC entry 4857 (class 2604 OID 25171)
 -- Name: pagos id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -890,7 +988,15 @@ ALTER TABLE ONLY public.pagos ALTER COLUMN id SET DEFAULT nextval('public.pagos_
 
 
 --
--- TOC entry 4844 (class 2604 OID 25151)
+-- TOC entry 4874 (class 2604 OID 65551)
+-- Name: pagos_bk id_bk; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pagos_bk ALTER COLUMN id_bk SET DEFAULT nextval('public.pagos_bk_id_bk_seq'::regclass);
+
+
+--
+-- TOC entry 4854 (class 2604 OID 25151)
 -- Name: promesas id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -898,7 +1004,15 @@ ALTER TABLE ONLY public.promesas ALTER COLUMN id SET DEFAULT nextval('public.pro
 
 
 --
--- TOC entry 4826 (class 2604 OID 25021)
+-- TOC entry 4876 (class 2604 OID 65559)
+-- Name: promesas_bk id_bk; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promesas_bk ALTER COLUMN id_bk SET DEFAULT nextval('public.promesas_bk_id_bk_seq'::regclass);
+
+
+--
+-- TOC entry 4836 (class 2604 OID 25021)
 -- Name: tipologias id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -906,7 +1020,7 @@ ALTER TABLE ONLY public.tipologias ALTER COLUMN id SET DEFAULT nextval('public.t
 
 
 --
--- TOC entry 4814 (class 2604 OID 24981)
+-- TOC entry 4824 (class 2604 OID 24981)
 -- Name: usuarios id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -914,41 +1028,39 @@ ALTER TABLE ONLY public.usuarios ALTER COLUMN id SET DEFAULT nextval('public.usu
 
 
 --
--- TOC entry 5095 (class 0 OID 24995)
+-- TOC entry 5115 (class 0 OID 24995)
 -- Dependencies: 222
 -- Data for Name: carteras; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.carteras (id, nombre_cartera, cuenta_nombre, identificacion_nombre, nombre_cliente_label, saldo_label, activa, fecha_creacion, lbl_nombre, lbl_saldo, lbl_telefono, lbl_estado) FROM stdin;
-1	Cartera Demo	Tarjeta	DPI	Deudor	Deuda Total	t	2026-04-23 09:17:16.871377+00	PRESTAMO	DEUDA_ACTUAL	CELULAR	ESTADO
+34	LEX	ID_Credito	Codigo_Cliente	\N	\N	t	2026-05-25 08:54:12.81393+00	Nombre_Deudor	Saldo_Total_Exigible	Teléfono	Estado
 \.
 
 
 --
--- TOC entry 5103 (class 0 OID 25048)
+-- TOC entry 5123 (class 0 OID 25048)
 -- Dependencies: 230
 -- Data for Name: clientes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.clientes (id, id_cartera, id_gestor_asignado, id_supervisor_cadena, cuenta, identificacion, nombre, saldo, telefono_1, telefono_2, estado, fecha_ultima_gestion, fecha_asignacion, search_vector, data_extras, fecha_actualizacion) FROM stdin;
-7	1	38	37	373202320320320	1234567890501	Eliza Peláez	18000.00	34445555	\N	activo	2026-05-23 20:54:00.671136+00	2026-05-23 20:49:52.66886+00	'1234567890501':3 '34445555':5 '373202320320320':4 'eliz':1 'pelaez':2	{"tasa_inter__s": "12"}	\N
-5	1	35	34	4444555566661110	1234567890123	Miguel Angel Asturias	3500.03	44445555	\N	activo	2026-05-23 20:55:09.308141+00	2026-05-13 06:49:14.589522+00	'1234567890123':4 '44445555':6 '4444555566661110':5 'angel':2 'asturi':3 'miguel':1	{"direccion": "2a avenida 3-33 zona 2 Escuintla", "tasa_inter__s": "12", "direccion_trabajo": "n/a"}	\N
-6	1	36	34	55554444111133302784	1234567890202	Maria del Carmen Paz	20000.00	44441234	44451235	activo	2026-05-18 02:59:36.999446+00	2026-05-17 00:34:07.687864+00	'1234567890202':5 '44441234':7 '55554444111133302784':6 'carm':3 'mari':1 'paz':4	{"direccion": "Barrio Gerona", "tasa_inter__s": "14", "direccion_trabajo": "Barrio Gerona"}	2026-05-24 00:43:03.128139
+16	34	36	34	CRE-88291	CLI-001	Juan Pérez García	5300.00	44445555	\N	activo	\N	2026-05-25 09:26:07.891096+00	'-001':5 '-88291':7 '44445555':8 'cli':4 'cre':6 'garc':3 'juan':1 'perez':2	{"_oneda": "GTQ", "_______": "2510 12345 0101", "_ias__ora": "45", "_tapa__obro": "Administrativa", "_apital__ora": "5000.00", "_tros__astos": "0.00", "_echa__raslado": "2024-04-15", "_gencia__rigen": "Agencia Central", "_egmento__roducto": "Microcrédito", "_oleta__eferencia": "B-99821", "_ntereses__oratorios": "50.00", "_ntereses__orrientes": "250.00"}	\N
 \.
 
 
 --
--- TOC entry 5115 (class 0 OID 25186)
+-- TOC entry 5135 (class 0 OID 25186)
 -- Dependencies: 242
 -- Data for Name: clientes_bk; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.clientes_bk (id_bk, id_original, lote_id, fecha_migracion, id_cartera, id_gestor_asignado, id_supervisor_cadena, cuenta, identificacion, nombre, saldo, telefono_1, telefono_2, estado, fecha_ultima_gestion) FROM stdin;
+COPY public.clientes_bk (id_bk, id_original, lote_id, fecha_migracion, id_cartera, id_gestor_asignado, id_supervisor_cadena, cuenta, identificacion, nombre, saldo, telefono_1, telefono_2, estado, fecha_ultima_gestion, data_extras) FROM stdin;
 \.
 
 
 --
--- TOC entry 5105 (class 0 OID 25082)
+-- TOC entry 5125 (class 0 OID 25082)
 -- Dependencies: 232
 -- Data for Name: data_extras; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -958,7 +1070,7 @@ COPY public.data_extras (id, id_cliente, id_extra, valor) FROM stdin;
 
 
 --
--- TOC entry 5097 (class 0 OID 25004)
+-- TOC entry 5117 (class 0 OID 25004)
 -- Dependencies: 224
 -- Data for Name: extras; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -968,20 +1080,29 @@ COPY public.extras (id, id_cartera, nombre_campo, etiqueta_display, tipo, orden_
 
 
 --
--- TOC entry 5123 (class 0 OID 32777)
+-- TOC entry 5143 (class 0 OID 32777)
 -- Dependencies: 250
 -- Data for Name: extras_cartera; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.extras_cartera (id, id_cartera, nombre_campo, etiqueta, tipo, orden, activo, modulo) FROM stdin;
-1	1	direccion	Dirección	texto	0	t	clientes
-2	1	direccion_trabajo	Dirección Trabajo	texto	0	t	clientes
-3	1	tasa_inter__s	Tasa interes	texto	0	t	clientes
+4	34	_______	DPI_NIT	texto	1	t	clientes
+5	34	_egmento__roducto	Segmento_Producto	texto	2	t	clientes
+6	34	_ias__ora	Dias_Mora	texto	3	t	clientes
+7	34	_tapa__obro	Etapa_Cobro	texto	4	t	clientes
+8	34	_echa__raslado	Fecha_Traslado	texto	5	t	clientes
+9	34	_gencia__rigen	Agencia_Origen	texto	6	t	clientes
+10	34	_oneda	Moneda	texto	7	t	clientes
+11	34	_apital__ora	Capital_Mora	texto	8	t	clientes
+12	34	_ntereses__orrientes	Intereses_Corrientes	texto	9	t	clientes
+13	34	_ntereses__oratorios	Intereses_Moratorios	texto	10	t	clientes
+14	34	_tros__astos	Otros_Gastos	texto	11	t	clientes
+15	34	_oleta__eferencia	Boleta_Referencia	texto	12	t	gestiones
 \.
 
 
 --
--- TOC entry 5109 (class 0 OID 25134)
+-- TOC entry 5129 (class 0 OID 25134)
 -- Dependencies: 236
 -- Data for Name: extras_historial; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -991,69 +1112,27 @@ COPY public.extras_historial (id, id_historial, nombre_campo, valor) FROM stdin;
 
 
 --
--- TOC entry 5107 (class 0 OID 25103)
+-- TOC entry 5127 (class 0 OID 25103)
 -- Dependencies: 234
 -- Data for Name: historial; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.historial (id, id_cliente, id_usuario, fecha_gestion, estatus, telefono_utilizado, id_tipologia, comentario, lote_origen_id, data_extras, fecha_proxima_llamada) FROM stdin;
-1	5	35	2026-05-14 02:55:50.746794+00	SINC	44440606	7	Cliente solicita le llamemos mañana a las 14:00 horas	\N	{}	\N
-2	5	35	2026-05-16 06:55:26.448198+00	COMP		20	Cliente se compromete a pagar mañana a las 3 pm	\N	{}	2026-05-16 15:00:00
-3	5	35	2026-05-16 07:06:47.854918+00	COMP		20	Cliente se compromete a pagar 500 mañana, quedó que le llamemos a las 3 pm para confirmar pago	\N	{}	2026-05-16 15:00:00
-4	5	35	2026-05-16 07:19:22.99475+00	COMP	44444444	22	Compromiso de pago para mañana a las 15:00 pide confirmar pago	\N	{}	2026-05-17 15:00:00
-5	5	35	2026-05-16 07:29:19.81636+00	COMP	44444444	20	prueba de compromiso	\N	{}	2026-05-17 15:00:00
-6	5	35	2026-05-16 07:32:49.895295+00	COMP	44444444	20	prueba compromiso	\N	{}	2026-05-18 15:00:00
-7	5	35	2026-05-16 07:34:43.410311+00	COMP	44444444	20	nueva prueba compromiso de 100 pesos	\N	{}	2026-05-17 15:00:00
-12	5	35	2026-05-16 07:38:00.718796+00	COMP	44444444	20	va de nuez 100 pesitos a ver si caen	\N	{}	2026-05-17 15:00:00
-14	5	35	2026-05-16 07:43:11.14591+00	COMP	44444444	20	otro paguito para el 18	\N	{}	2026-05-18 13:00:00
-15	5	35	2026-05-16 07:52:23.250275+00	COMP	44444444	20	otros 100 compromiso	\N	{}	2026-05-18 15:00:00
-16	5	35	2026-05-16 07:53:44.598533+00	COMP	44444444	20	otra vez	\N	{}	2026-05-18 15:00:00
-17	5	35	2026-05-16 07:57:12.167989+00	COMP	44444444	20	van 5000 pesitos de promesa, a ver si se guardan	\N	{}	2026-05-18 15:00:00
-18	5	35	2026-05-16 07:59:23.864319+00	COMP	44444444	20	a ver si graba 5000	\N	{}	2026-05-25 15:00:00
-22	5	35	2026-05-17 00:26:46.396119+00	COMP	44444444	16	probando 2500	\N	{}	\N
-23	6	36	2026-05-17 00:37:27.384206+00	COMP	44444444	20	Pueba grabación 5000	\N	{}	2026-03-25 11:00:00
-27	6	36	2026-05-17 02:59:57.34925+00	COMP	44444444	8	preuba de compromiso de pago	\N	{}	2026-05-25 15:00:00
-30	6	36	2026-05-17 05:43:35.447427+00	PAGO	44444444	9	Se recibe pago parcial de Q5000.00	\N	{}	2026-05-25 13:00:00
-31	5	34	2026-05-17 06:19:34.697902+00	PAGO	44444444	9	prueba de pago de 2000	\N	{}	2026-05-25 13:00:00
-32	6	36	2026-05-18 02:59:36.999446+00	PAGO	22224444	9	prueba 5000\r\nse realiza la prueba para poder comprobar si el nuevo formulario realiza la transacción	\N	{}	2025-06-02 10:00:00
-36	5	35	2026-05-18 06:51:14.608771+00	PAGO	44445555	9	promesa cumplida por Q5000 del 25/052026	\N	{"id_promesa_aplicada": 1}	2026-06-15 15:00:00
-35	5	35	2026-05-18 06:48:35.795441+00	PAGO	44444444	9	prueba promesa cumplida de 2500	\N	{"id_promesa_aplicada": 2}	2026-06-15 15:00:00
-34	5	35	2026-05-18 06:40:12.98246+00	PAGO	44444444	9	promesa 19/05/2026 por Q2500 cumplida boleta 12315 Industrial	\N	[]	2026-06-15 13:00:00
-33	5	35	2026-05-18 06:10:59.261957+00	PAGO	44445555	9	promesa cumplida del 19/05/2026 por Q2500, lo llamaremos el otro mes el 15/05/2026 a las 11:00 horas	\N	[]	2026-05-19 11:00:00
-37	5	35	2026-05-18 06:54:57.761619+00	PAGO	44445555	9	prueba de paso sin promesa por 2500	\N	[]	2026-06-25 13:00:00
-38	5	35	2026-05-18 07:00:10.188058+00	COMP	44444444	8	Cliente se compromete a pagar, realizará el pago hoy y notificará de boleta gyt por Q1000	\N	[]	2026-05-18 01:00:00
-87	7	38	2026-05-23 20:54:00.671136+00	COMP	34445555	8	prueba usuario nuevo y supervisor extra por Q100	\N	[]	2026-05-23 14:55:00
-88	5	35	2026-05-23 20:55:09.308141+00	COMP	44444444	8	prueba compromiso en supervisor aparte	\N	[]	2026-05-23 14:55:00
-39	5	35	2026-05-18 20:54:58.353521+00	COMP	44445555	17	Cliente se compromete a pagar 100 hoy	\N	[]	2026-05-18 19:06:00
-41	5	35	2026-05-19 01:15:12.817324+00	PAGO	44444444	9	Prueba de tipología pendiente	\N	{"id_promesa_aplicada": 5}	2026-06-25 15:00:00
-40	5	35	2026-05-19 01:02:39.226268+00	PAGO		9	pago para hoy Q100	\N	{"id_promesa_aplicada": 6}	2026-06-25 13:00:00
-42	5	35	2026-05-19 01:22:25.512535+00	COMP	44445555	17	Cliente se compromete a pagar Q100 y que le llamemos en 5 minutos	\N	[]	2026-01-18 19:22:00
-43	5	35	2026-05-19 01:25:18.672738+00	PAGO	44444444	9	prueba de pago de 100	\N	{"id_promesa_aplicada": 7}	2026-06-25 13:00:00
-45	5	35	2026-05-19 01:58:37.709883+00	COMP	44444444	8	prueba de compromiso Q100	\N	[]	2026-05-18 20:00:00
-46	5	35	2026-05-19 01:59:23.506233+00	PAGO	44444444	9	prueba de pago Q100	\N	{"id_promesa_aplicada": 9}	2026-06-26 11:00:00
-47	5	35	2026-05-19 02:06:16.81838+00	COMP	44445555	8	Cliente se compromete hoy para pagar Q100, se le llamará en 5 munutos	\N	[]	2026-05-18 20:09:00
-48	5	35	2026-05-19 02:07:26.506682+00	PAGO	44444444	9	prueba pago 100 exitosa	\N	{"id_promesa_aplicada": 10}	2026-05-31 13:00:00
-49	5	35	2026-05-19 02:14:13.382898+00	COMP	44445555	8	Cliente se compromete hoy a pagar Q100 en el BI	\N	[]	2026-05-18 20:15:00
-50	5	35	2026-05-19 02:16:06.352943+00	PAGO	44445555	9	Cliente realiza pago de Q100 en el BI boleta 123456, se llamará a fin de més	\N	{"id_promesa_aplicada": 11}	2026-05-31 11:00:00
-51	5	35	2026-05-19 04:06:02.226365+00	COMP	44444444	8	Prueba promesa 100	\N	[]	2026-05-31 15:00:00
-52	5	35	2026-05-19 04:11:43.921273+00	PAGG	44444444	9	aplicación pago 100	\N	{"id_promesa_aplicada": 12}	2026-05-31 13:00:00
-85	5	35	2026-05-20 07:52:55.64751+00	COMP	44444444	20	prueba 100 quetzales	\N	[]	2026-05-20 01:55:00
-86	5	35	2026-05-20 07:53:35.829706+00	PAGG	44444444	9	prueba de grabación pago 100	\N	{"id_promesa_aplicada": 13}	2026-06-15 13:00:00
 \.
 
 
 --
--- TOC entry 5117 (class 0 OID 25199)
+-- TOC entry 5137 (class 0 OID 25199)
 -- Dependencies: 244
 -- Data for Name: historial_bk; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.historial_bk (id_bk, id_original, lote_id, fecha_migracion, id_cliente, id_usuario, fecha_gestion, estatus, telefono_utilizado, id_tipologia, comentario) FROM stdin;
+COPY public.historial_bk (id_bk, id_original, lote_id, fecha_migracion, id_cliente, id_usuario, fecha_gestion, estatus, telefono_utilizado, id_tipologia, comentario, data_extras, fecha_proxima_llamada) FROM stdin;
 \.
 
 
 --
--- TOC entry 5121 (class 0 OID 25229)
+-- TOC entry 5141 (class 0 OID 25229)
 -- Dependencies: 248
 -- Data for Name: logs_asistencia; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1063,7 +1142,7 @@ COPY public.logs_asistencia (id, usuario_id, entrada, salida, horas_trabajadas, 
 
 
 --
--- TOC entry 5119 (class 0 OID 25214)
+-- TOC entry 5139 (class 0 OID 25214)
 -- Dependencies: 246
 -- Data for Name: logs_auditoria; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1183,113 +1262,141 @@ COPY public.logs_auditoria (id, usuario_id, accion, tabla_afectada, registro_id,
 112	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "1", "registros_importados": 1}	2026-05-24 00:43:03.193324
 113	36	login	usuarios	36	::1	\N	\N	2026-05-24 00:43:55.339897
 114	1	login	usuarios	1	::1	\N	\N	2026-05-24 01:53:15.744068
+115	35	login	usuarios	35	::1	\N	\N	2026-05-24 02:58:39.538289
+116	1	login	usuarios	1	::1	\N	\N	2026-05-24 03:00:21.755581
+117	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "1", "registros_importados": 1}	2026-05-24 05:28:54.71398
+118	38	login	usuarios	38	::1	\N	\N	2026-05-24 05:57:15.820075
+119	1	login	usuarios	1	::1	\N	\N	2026-05-24 05:58:01.843921
+120	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "1", "registros_importados": 1}	2026-05-24 06:02:50.559251
+121	38	login	usuarios	38	::1	\N	\N	2026-05-24 06:03:07.501432
+122	1	login	usuarios	1	::1	\N	\N	2026-05-24 06:04:54.107736
+123	35	login	usuarios	35	::1	\N	\N	2026-05-25 02:19:48.441658
+124	38	login	usuarios	38	::1	\N	\N	2026-05-25 02:20:15.15857
+125	1	login	usuarios	1	::1	\N	\N	2026-05-25 02:22:51.187758
+126	1	login	usuarios	1	::1	\N	\N	2026-05-25 05:46:09.504212
+127	35	login	usuarios	35	::1	\N	\N	2026-05-25 08:10:58.259428
+128	1	login	usuarios	1	::1	\N	\N	2026-05-25 08:16:11.986921
+129	1	insert	carteras	34	::1	\N	{"lbl_saldo": "Saldo_Total_Exigible", "lbl_estado": "Estado", "lbl_nombre": "Nombre_Deudor", "lbl_telefono": "Teléfono", "cuenta_nombre": "ID_Credito", "nombre_cartera": "LEX", "identificacion_nombre": "Codigo_Cliente"}	2026-05-25 08:54:12.816224
+130	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "34", "registros_importados": 2}	2026-05-25 09:06:06.655174
+131	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "34", "registros_importados": 2}	2026-05-25 09:18:40.423769
+132	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "34", "registros_importados": 1}	2026-05-25 09:25:17.694094
+133	1	carga_csv	clientes	\N	::1	\N	{"cartera_id": "34", "registros_importados": 1}	2026-05-25 09:26:07.96244
+134	35	login	usuarios	35	::1	\N	\N	2026-05-25 10:04:17.332306
+135	1	login	usuarios	1	::1	\N	\N	2026-05-25 10:04:32.760629
+136	36	login	usuarios	36	::1	\N	\N	2026-05-25 10:04:59.923843
+137	1	login	usuarios	1	::1	\N	\N	2026-05-25 10:06:30.244741
+138	1	login	usuarios	1	::1	\N	\N	2026-05-25 10:07:03.484373
+139	39	login	usuarios	39	::1	\N	\N	2026-05-25 10:10:43.590258
+140	36	login	usuarios	36	::1	\N	\N	2026-05-25 10:11:44.194078
+141	34	login	usuarios	34	::1	\N	\N	2026-05-25 10:12:06.354026
+142	39	login	usuarios	39	::1	\N	\N	2026-05-25 10:13:13.545148
 \.
 
 
 --
--- TOC entry 5101 (class 0 OID 25031)
+-- TOC entry 5121 (class 0 OID 25031)
 -- Dependencies: 228
 -- Data for Name: lotes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.lotes (id, fecha_ejecucion, usuario_id, tipo_operacion, cantidad_registros, observaciones, estado) FROM stdin;
+3	2026-05-24 05:23:52.871933+00	1	migracion_backup	1	\N	completado
+4	2026-05-24 06:06:01.209413+00	1	migracion_backup	1	\N	completado
+5	2026-05-25 03:48:35.679317+00	1	migracion_backup	1	\N	completado
+6	2026-05-25 04:38:59.585116+00	1	migracion_backup	1	\N	completado
+7	2026-05-25 04:42:32.202385+00	1	migracion_backup	1	\N	completado
+8	2026-05-25 04:42:34.713433+00	1	migracion_backup	1	\N	completado
+9	2026-05-25 04:42:37.960888+00	1	migracion_backup	1	\N	completado
+10	2026-05-25 04:42:38.464765+00	1	migracion_backup	1	\N	completado
+11	2026-05-25 04:42:38.705057+00	1	migracion_backup	1	\N	completado
+12	2026-05-25 04:42:38.997309+00	1	migracion_backup	1	\N	completado
+13	2026-05-25 04:42:47.441029+00	1	migracion_backup	1	\N	completado
+14	2026-05-25 04:43:58.038118+00	1	migracion_backup	1	\N	completado
+15	2026-05-25 04:45:25.905244+00	1	migracion_backup	1	\N	completado
+16	2026-05-25 04:46:50.333357+00	1	migracion_backup	1	\N	completado
+17	2026-05-25 04:46:51.972889+00	1	migracion_backup	1	\N	completado
+18	2026-05-25 04:47:31.720159+00	1	migracion_backup	1	\N	completado
+19	2026-05-25 04:53:00.904252+00	1	migracion_backup	1	\N	completado
+20	2026-05-25 08:36:40.414838+00	1	migracion_backup	3	\N	completado
+21	2026-05-25 08:37:48.159773+00	1	migracion_backup	1	\N	completado
 \.
 
 
 --
--- TOC entry 5113 (class 0 OID 25168)
+-- TOC entry 5133 (class 0 OID 25168)
 -- Dependencies: 240
 -- Data for Name: pagos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.pagos (id, id_cliente, monto, fecha_pago, referencia_bancaria, estatus, validado_por, fecha_validacion, id_historial) FROM stdin;
-3	6	5000.00	2026-05-17 05:43:35.447427	Pago boleto 123456789 banco industrial confirma gerente	PAGO	1	2026-05-17 06:16:25.350892+00	30
-4	5	2000.00	2026-05-17 06:19:34.697902	confirmación con pago aplicado con gestor	PAGO	1	2026-05-17 06:20:47.604868+00	31
-5	6	5000.00	2026-05-18 02:59:36.999446	confirmado banco azteca boleta 2221231	PAGO	1	2026-05-18 03:00:20.087732+00	32
-9	5	5000.00	2026-05-18 06:51:14.608771	boleta 1231231 BI	PAGO	1	2026-05-18 06:52:47.409432+00	36
-8	5	2500.00	2026-05-18 06:48:35.795441	boleta 13213213 banrural	PAGO	1	2026-05-18 06:52:59.454908+00	35
-7	5	2500.00	2026-05-18 06:40:12.98246	boelta 6513132 gyt	PAGO	1	2026-05-18 06:53:11.979656+00	34
-6	5	2500.00	2026-05-18 06:10:59.261957	boleta 131312 BAM	PAGO	1	2026-05-18 06:53:30.222811+00	33
-10	5	2500.00	2026-05-18 06:54:57.761619	Pago boleto 123456789 banco industrial confirma gerente	PAGO	1	2026-05-18 06:55:29.51951+00	37
-12	5	1000.00	2026-05-19 01:15:12.817324	Pago boleto 123456789 banco industrial confirma gerente	PAGO	1	2026-05-19 01:15:51.393915+00	41
-11	5	99.97	2026-05-19 01:02:39.226268	confirmación con pago aplicado con gestor	PAGO	1	2026-05-19 01:16:08.427402+00	40
-13	5	100.00	2026-05-19 01:25:18.672738	boleta 1231231 BI	PAGO	1	2026-05-19 01:26:05.587334+00	43
-14	5	100.00	2026-05-19 01:59:23.506233	Pago boleto 123456789 banco industrial confirma gerente	PAGO	1	2026-05-19 02:00:16.143535+00	46
-15	5	100.00	2026-05-19 02:07:26.506682	Pago boleto 123456789 banco industrial confirma gerente	PAGO	1	2026-05-19 02:07:48.750749+00	48
-16	5	100.00	2026-05-19 02:16:06.352943	confirmación boleta 123456 por Q100 BI, confirma Oficina Central BAC	PAGO	1	2026-05-19 02:17:35.359613+00	50
-17	5	100.00	2026-05-19 04:11:43.921273		PAGG	\N	\N	52
-50	5	100.00	2026-05-20 07:53:35.829706		PAGG	\N	\N	86
 \.
 
 
 --
--- TOC entry 5111 (class 0 OID 25148)
+-- TOC entry 5145 (class 0 OID 65548)
+-- Dependencies: 252
+-- Data for Name: pagos_bk; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pagos_bk (id_bk, id_original, lote_id, fecha_migracion, id_cliente, monto, fecha_pago, referencia_bancaria, estatus, validado_por, fecha_validacion, id_historial) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5131 (class 0 OID 25148)
 -- Dependencies: 238
 -- Data for Name: promesas; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.promesas (id, id_cliente, id_usuario, monto_prometido, fecha_compromiso, fecha_registro, estatus, id_historial) FROM stdin;
-3	6	36	5000.00	2026-05-19 00:00:00	2026-05-17 00:37:27.384206+00	pendiente	17
-4	6	36	500.00	2026-05-19 00:00:00	2026-05-17 02:59:57.34925+00	pendiente	18
-2	5	35	2500.00	2026-05-19 00:00:00	2026-05-17 00:26:46.396119+00	cumplida	22
-1	5	35	5000.00	2026-05-25 15:00:00	2026-05-16 07:59:23.864319+00	cumplida	23
-6	5	35	100.00	2026-05-21 00:00:00	2026-05-18 20:54:58.353521+00	cumplida	27
-5	5	35	1000.00	2026-05-18 19:23:00	2026-05-18 07:00:10.188058+00	cumplida	38
-7	5	35	100.00	2026-05-21 00:00:00	2026-05-19 01:22:25.512535+00	cumplida	39
-9	5	35	100.00	2026-05-18 20:00:00	2026-05-19 01:58:37.709883+00	cumplida	42
-10	5	35	100.00	2026-05-18 20:09:00	2026-05-19 02:06:16.81838+00	cumplida	45
-11	5	35	100.00	2026-05-18 20:15:00	2026-05-19 02:14:13.382898+00	cumplida	47
-12	5	35	100.00	2026-05-18 22:09:00	2026-05-19 04:06:02.226365+00	cumplida	49
-13	5	35	100.00	2026-05-20 01:55:00	2026-05-20 07:52:55.64751+00	cumplida	51
-14	7	38	100.00	2026-05-23 14:55:00	2026-05-23 20:54:00.671136+00	pendiente	87
-15	5	35	100.00	2026-05-23 14:55:00	2026-05-23 20:55:09.308141+00	pendiente	88
 \.
 
 
 --
--- TOC entry 5099 (class 0 OID 25018)
+-- TOC entry 5147 (class 0 OID 65556)
+-- Dependencies: 254
+-- Data for Name: promesas_bk; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.promesas_bk (id_bk, id_original, lote_id, fecha_migracion, id_cliente, id_usuario, monto_prometido, fecha_compromiso, fecha_registro, estatus, id_historial) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5119 (class 0 OID 25018)
 -- Dependencies: 226
 -- Data for Name: tipologias; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.tipologias (id, clase, padre_id, nombre, codigo_origen, id_cartera, requiere_proxima_fecha, requiere_monto, estatus_default) FROM stdin;
-6	T	\N	Descartado	105	1	f	f	SINC
-9	S	1	Pago Parcial Realizado	202	1	t	t	PAGG
-1	T	\N	Contacto Exitoso	100	1	t	f	SINC
-2	T	\N	Sin Contacto	101	1	t	f	SINC
-4	T	\N	Negativa de Pago	103	1	t	f	SINC
-5	T	\N	Gestión Judicial	104	1	t	f	SINC
-7	S	1	Cliente Colaborativo	200	1	t	f	SINC
-10	S	1	Solicita Reestructuración	203	1	t	f	SINC
-11	S	1	Reconoce Deuda	204	1	t	f	SINC
-12	S	2	Teléfono No Existe	210	1	t	f	SINC
-13	S	2	Teléfono Apagado	211	1	t	f	SINC
-14	S	2	Sin Respuesta (3 intentos)	212	1	t	f	SINC
-15	S	2	Número Equivocado	213	1	t	f	SINC
-16	S	2	Cliente No Localizado	214	1	t	f	SINC
-21	S	4	No Reconoce Deuda	230	1	t	f	SINC
-22	S	4	Disputa el Monto	231	1	t	f	SINC
-23	S	4	Sin Capacidad de Pago	232	1	t	f	SINC
-24	S	4	Niega Obligación	233	1	t	f	SINC
-25	S	4	Se Niega a Pagar	234	1	t	f	SINC
-26	S	5	Proceso Legal Iniciado	240	1	t	f	SINC
-27	S	5	Embargo en Proceso	241	1	t	f	SINC
-28	S	5	Demanda Judicial	242	1	t	f	SINC
-3	T	\N	Promesa de Pago	102	1	t	f	SINC
-29	S	6	Fallecido	250	1	f	f	SINC
-30	S	6	Cliente Irrelocalizable	251	1	f	f	SINC
-31	S	6	Cuenta Cancelada	252	1	f	f	SINC
-32	S	6	Prescripción	253	1	f	f	SINC
-8	S	1	Se Compromete a Pagar	201	1	t	t	COMP
-17	S	3	Compromiso Hoy	220	1	t	t	COMP
-18	S	3	Compromiso Esta Semana	221	1	t	t	COMP
-19	S	3	Compromiso Próximo Mes	222	1	t	t	COMP
-20	S	3	Compromiso con Fecha Específica	223	1	t	t	COMP
+60	S	42	Migro	21	34	f	f	SINC
+61	S	\N	Fallecido	22	34	f	f	SINC
+62	S	61	Fallecido	23	34	f	f	SINC
+40	T	\N	Contacto Efectivo	1	34	t	f	SINC
+41	T	\N	Contacto No Efectivo	2	34	t	f	SINC
+42	T	\N	Datos Incorrectos	3	34	t	f	SINC
+45	T	\N	Plan de Pagos (PLP)	6	34	t	f	SINC
+46	S	40	Negativa de Pago (NP)	7	34	t	f	SINC
+47	S	40	Incapacidad de Pago (IP)	8	34	t	f	SINC
+48	S	40	solicita descuento	9	34	t	f	SINC
+49	S	40	cliente solicita estado de cuenta	10	34	t	f	SINC
+50	S	40	solicitud de no contacto	11	34	t	f	SINC
+51	S	41	No Contesta / Buzón	12	34	t	f	SINC
+52	S	41	Promesa Incumplida (PI)	13	34	t	f	SINC
+53	S	41	Tercero Informado	14	34	t	f	SINC
+54	S	41	Cita Programada	15	34	t	f	SINC
+55	S	41	teléfono apagado o numero bloqueado	16	34	t	f	SINC
+56	S	41	fuera de servicio	17	34	t	f	SINC
+57	S	41	buzon de voz	18	34	t	f	SINC
+58	S	42	Número Equivocado	19	34	t	f	SINC
+59	S	42	Llamar en otro horario	20	34	t	f	SINC
+43	T	\N	Promesa de Pago (PP)	4	34	t	t	COMP
+44	T	\N	Ya Pagó (YP)	5	34	t	t	PAGG
 \.
 
 
 --
--- TOC entry 5093 (class 0 OID 24978)
+-- TOC entry 5113 (class 0 OID 24978)
 -- Dependencies: 220
 -- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1297,42 +1404,43 @@ COPY public.tipologias (id, clase, padre_id, nombre, codigo_origen, id_cartera, 
 COPY public.usuarios (id, nombre, usuario, clave_hash, rol, supervisor_id, activo, fecha_creacion, fecha_ultimo_login) FROM stdin;
 34	Juan Pérez	jperez	$2y$10$8kPJWtWR1gMR.wVitIxDZ..CZG47y.POwlnNGQNl9eKxCHANcdSNC	supervisor	\N	t	2026-05-01 03:30:04.919826+00	\N
 35	Gerson Solis	gsolis	$2y$10$8kPJWtWR1gMR.wVitIxDZ..CZG47y.POwlnNGQNl9eKxCHANcdSNC	gestor	34	t	2026-05-01 03:30:29.898543+00	\N
-1	Administrador General	admin	$2y$10$8kPJWtWR1gMR.wVitIxDZ..CZG47y.POwlnNGQNl9eKxCHANcdSNC	admin	\N	t	2026-04-23 09:17:16.871377+00	\N
 36	edgar ricardo arjona	earjona	$2y$10$34oFnbmOEPG7tPxjRKsn.uMmdEJ58PajayJdQRMZyg21aumuqAUUO	gestor	34	t	2026-05-17 00:30:30.57159+00	\N
 37	Luis Cruz	lcruz	$2y$10$KBqcIOi1h9vzz78Z3uOtne6jakp9B5ObkJ69HijReusBNKJQK7h9C	supervisor	\N	t	2026-05-23 20:16:26.962794+00	\N
 38	Pablo Marmol	pmarmol	$2y$10$JVQ5q5jixCNkxfF8zJt0KOfC3Q9uOJ.obbGKOC9mx2AtRgU2QvcDO	gestor	37	t	2026-05-23 20:42:08.191858+00	\N
+1	Administrador General	admin	$2y$10$KqFqwWWbrP8tCJK4hjaJ5OiJ/7rEMmEWhemNciN4EAjlVpjn5ZqB2	admin	\N	t	2026-04-23 09:17:16.871377+00	\N
+39	Supervisor General	supervisor	$2y$10$h1kJX55TK2sbo1HW2S.ine7uTSLYa9wWiv4aPQvTABwPx9TYB/Vem	supervisor_general	\N	t	2026-05-25 10:07:50.600986+00	\N
 \.
 
 
 --
--- TOC entry 5147 (class 0 OID 0)
+-- TOC entry 5173 (class 0 OID 0)
 -- Dependencies: 221
 -- Name: carteras_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.carteras_id_seq', 33, true);
+SELECT pg_catalog.setval('public.carteras_id_seq', 34, true);
 
 
 --
--- TOC entry 5148 (class 0 OID 0)
+-- TOC entry 5174 (class 0 OID 0)
 -- Dependencies: 241
 -- Name: clientes_bk_id_bk_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clientes_bk_id_bk_seq', 1, false);
+SELECT pg_catalog.setval('public.clientes_bk_id_bk_seq', 16, true);
 
 
 --
--- TOC entry 5149 (class 0 OID 0)
+-- TOC entry 5175 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: clientes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clientes_id_seq', 8, true);
+SELECT pg_catalog.setval('public.clientes_id_seq', 16, true);
 
 
 --
--- TOC entry 5150 (class 0 OID 0)
+-- TOC entry 5176 (class 0 OID 0)
 -- Dependencies: 231
 -- Name: data_extras_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1341,16 +1449,16 @@ SELECT pg_catalog.setval('public.data_extras_id_seq', 1, false);
 
 
 --
--- TOC entry 5151 (class 0 OID 0)
+-- TOC entry 5177 (class 0 OID 0)
 -- Dependencies: 249
 -- Name: extras_cartera_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.extras_cartera_id_seq', 3, true);
+SELECT pg_catalog.setval('public.extras_cartera_id_seq', 15, true);
 
 
 --
--- TOC entry 5152 (class 0 OID 0)
+-- TOC entry 5178 (class 0 OID 0)
 -- Dependencies: 235
 -- Name: extras_historial_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1359,7 +1467,7 @@ SELECT pg_catalog.setval('public.extras_historial_id_seq', 1, false);
 
 
 --
--- TOC entry 5153 (class 0 OID 0)
+-- TOC entry 5179 (class 0 OID 0)
 -- Dependencies: 223
 -- Name: extras_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1368,25 +1476,25 @@ SELECT pg_catalog.setval('public.extras_id_seq', 1, false);
 
 
 --
--- TOC entry 5154 (class 0 OID 0)
+-- TOC entry 5180 (class 0 OID 0)
 -- Dependencies: 243
 -- Name: historial_bk_id_bk_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.historial_bk_id_bk_seq', 1, false);
+SELECT pg_catalog.setval('public.historial_bk_id_bk_seq', 361, true);
 
 
 --
--- TOC entry 5155 (class 0 OID 0)
+-- TOC entry 5181 (class 0 OID 0)
 -- Dependencies: 233
 -- Name: historial_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.historial_id_seq', 88, true);
+SELECT pg_catalog.setval('public.historial_id_seq', 105, true);
 
 
 --
--- TOC entry 5156 (class 0 OID 0)
+-- TOC entry 5182 (class 0 OID 0)
 -- Dependencies: 247
 -- Name: logs_asistencia_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1395,61 +1503,79 @@ SELECT pg_catalog.setval('public.logs_asistencia_id_seq', 1, false);
 
 
 --
--- TOC entry 5157 (class 0 OID 0)
+-- TOC entry 5183 (class 0 OID 0)
 -- Dependencies: 245
 -- Name: logs_auditoria_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.logs_auditoria_id_seq', 114, true);
+SELECT pg_catalog.setval('public.logs_auditoria_id_seq', 142, true);
 
 
 --
--- TOC entry 5158 (class 0 OID 0)
+-- TOC entry 5184 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: lotes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.lotes_id_seq', 1, false);
+SELECT pg_catalog.setval('public.lotes_id_seq', 21, true);
 
 
 --
--- TOC entry 5159 (class 0 OID 0)
+-- TOC entry 5185 (class 0 OID 0)
+-- Dependencies: 251
+-- Name: pagos_bk_id_bk_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.pagos_bk_id_bk_seq', 132, true);
+
+
+--
+-- TOC entry 5186 (class 0 OID 0)
 -- Dependencies: 239
 -- Name: pagos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.pagos_id_seq', 50, true);
+SELECT pg_catalog.setval('public.pagos_id_seq', 51, true);
 
 
 --
--- TOC entry 5160 (class 0 OID 0)
+-- TOC entry 5187 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: promesas_bk_id_bk_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.promesas_bk_id_bk_seq', 105, true);
+
+
+--
+-- TOC entry 5188 (class 0 OID 0)
 -- Dependencies: 237
 -- Name: promesas_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.promesas_id_seq', 15, true);
+SELECT pg_catalog.setval('public.promesas_id_seq', 16, true);
 
 
 --
--- TOC entry 5161 (class 0 OID 0)
+-- TOC entry 5189 (class 0 OID 0)
 -- Dependencies: 225
 -- Name: tipologias_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tipologias_id_seq', 32, true);
+SELECT pg_catalog.setval('public.tipologias_id_seq', 62, true);
 
 
 --
--- TOC entry 5162 (class 0 OID 0)
+-- TOC entry 5190 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: usuarios_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.usuarios_id_seq', 38, true);
+SELECT pg_catalog.setval('public.usuarios_id_seq', 39, true);
 
 
 --
--- TOC entry 4875 (class 2606 OID 25002)
+-- TOC entry 4891 (class 2606 OID 25002)
 -- Name: carteras carteras_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1458,7 +1584,7 @@ ALTER TABLE ONLY public.carteras
 
 
 --
--- TOC entry 4909 (class 2606 OID 25192)
+-- TOC entry 4925 (class 2606 OID 25192)
 -- Name: clientes_bk clientes_bk_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1467,7 +1593,7 @@ ALTER TABLE ONLY public.clientes_bk
 
 
 --
--- TOC entry 4886 (class 2606 OID 25059)
+-- TOC entry 4902 (class 2606 OID 25059)
 -- Name: clientes clientes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1476,7 +1602,7 @@ ALTER TABLE ONLY public.clientes
 
 
 --
--- TOC entry 4895 (class 2606 OID 25091)
+-- TOC entry 4911 (class 2606 OID 25091)
 -- Name: data_extras data_extras_id_cliente_id_extra_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1485,7 +1611,7 @@ ALTER TABLE ONLY public.data_extras
 
 
 --
--- TOC entry 4897 (class 2606 OID 25089)
+-- TOC entry 4913 (class 2606 OID 25089)
 -- Name: data_extras data_extras_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1494,7 +1620,7 @@ ALTER TABLE ONLY public.data_extras
 
 
 --
--- TOC entry 4917 (class 2606 OID 32787)
+-- TOC entry 4933 (class 2606 OID 32787)
 -- Name: extras_cartera extras_cartera_id_cartera_nombre_campo_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1503,7 +1629,7 @@ ALTER TABLE ONLY public.extras_cartera
 
 
 --
--- TOC entry 4919 (class 2606 OID 32785)
+-- TOC entry 4935 (class 2606 OID 32785)
 -- Name: extras_cartera extras_cartera_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1512,7 +1638,7 @@ ALTER TABLE ONLY public.extras_cartera
 
 
 --
--- TOC entry 4902 (class 2606 OID 25141)
+-- TOC entry 4918 (class 2606 OID 25141)
 -- Name: extras_historial extras_historial_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1521,7 +1647,7 @@ ALTER TABLE ONLY public.extras_historial
 
 
 --
--- TOC entry 4877 (class 2606 OID 25011)
+-- TOC entry 4893 (class 2606 OID 25011)
 -- Name: extras extras_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1530,7 +1656,7 @@ ALTER TABLE ONLY public.extras
 
 
 --
--- TOC entry 4911 (class 2606 OID 25207)
+-- TOC entry 4927 (class 2606 OID 25207)
 -- Name: historial_bk historial_bk_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1539,7 +1665,7 @@ ALTER TABLE ONLY public.historial_bk
 
 
 --
--- TOC entry 4899 (class 2606 OID 25112)
+-- TOC entry 4915 (class 2606 OID 25112)
 -- Name: historial historial_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1548,7 +1674,7 @@ ALTER TABLE ONLY public.historial
 
 
 --
--- TOC entry 4915 (class 2606 OID 25235)
+-- TOC entry 4931 (class 2606 OID 25235)
 -- Name: logs_asistencia logs_asistencia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1557,7 +1683,7 @@ ALTER TABLE ONLY public.logs_asistencia
 
 
 --
--- TOC entry 4913 (class 2606 OID 25222)
+-- TOC entry 4929 (class 2606 OID 25222)
 -- Name: logs_auditoria logs_auditoria_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1566,7 +1692,7 @@ ALTER TABLE ONLY public.logs_auditoria
 
 
 --
--- TOC entry 4884 (class 2606 OID 25041)
+-- TOC entry 4900 (class 2606 OID 25041)
 -- Name: lotes lotes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1575,7 +1701,16 @@ ALTER TABLE ONLY public.lotes
 
 
 --
--- TOC entry 4907 (class 2606 OID 25174)
+-- TOC entry 4938 (class 2606 OID 65554)
+-- Name: pagos_bk pagos_bk_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pagos_bk
+    ADD CONSTRAINT pagos_bk_pkey PRIMARY KEY (id_bk);
+
+
+--
+-- TOC entry 4923 (class 2606 OID 25174)
 -- Name: pagos pagos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1584,7 +1719,16 @@ ALTER TABLE ONLY public.pagos
 
 
 --
--- TOC entry 4905 (class 2606 OID 25156)
+-- TOC entry 4940 (class 2606 OID 65562)
+-- Name: promesas_bk promesas_bk_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promesas_bk
+    ADD CONSTRAINT promesas_bk_pkey PRIMARY KEY (id_bk);
+
+
+--
+-- TOC entry 4921 (class 2606 OID 25156)
 -- Name: promesas promesas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1593,7 +1737,7 @@ ALTER TABLE ONLY public.promesas
 
 
 --
--- TOC entry 4880 (class 2606 OID 25024)
+-- TOC entry 4896 (class 2606 OID 25024)
 -- Name: tipologias tipologias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1602,7 +1746,7 @@ ALTER TABLE ONLY public.tipologias
 
 
 --
--- TOC entry 4882 (class 2606 OID 32775)
+-- TOC entry 4898 (class 2606 OID 32775)
 -- Name: tipologias uq_tipologia_cartera; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1611,7 +1755,7 @@ ALTER TABLE ONLY public.tipologias
 
 
 --
--- TOC entry 4871 (class 2606 OID 24986)
+-- TOC entry 4887 (class 2606 OID 24986)
 -- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1620,7 +1764,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 4873 (class 2606 OID 24988)
+-- TOC entry 4889 (class 2606 OID 24988)
 -- Name: usuarios usuarios_usuario_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1629,7 +1773,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 4887 (class 1259 OID 25076)
+-- TOC entry 4903 (class 1259 OID 25076)
 -- Name: idx_clientes_cartera; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1637,7 +1781,7 @@ CREATE INDEX idx_clientes_cartera ON public.clientes USING btree (id_cartera);
 
 
 --
--- TOC entry 4888 (class 1259 OID 65542)
+-- TOC entry 4904 (class 1259 OID 65542)
 -- Name: idx_clientes_cuenta_unico; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1645,7 +1789,7 @@ CREATE UNIQUE INDEX idx_clientes_cuenta_unico ON public.clientes USING btree (cu
 
 
 --
--- TOC entry 4889 (class 1259 OID 32801)
+-- TOC entry 4905 (class 1259 OID 32801)
 -- Name: idx_clientes_extras; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1653,7 +1797,7 @@ CREATE INDEX idx_clientes_extras ON public.clientes USING gin (data_extras);
 
 
 --
--- TOC entry 4890 (class 1259 OID 25077)
+-- TOC entry 4906 (class 1259 OID 25077)
 -- Name: idx_clientes_gestor; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1661,7 +1805,7 @@ CREATE INDEX idx_clientes_gestor ON public.clientes USING btree (id_gestor_asign
 
 
 --
--- TOC entry 4891 (class 1259 OID 25080)
+-- TOC entry 4907 (class 1259 OID 25080)
 -- Name: idx_clientes_identificacion; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1669,7 +1813,7 @@ CREATE INDEX idx_clientes_identificacion ON public.clientes USING btree (identif
 
 
 --
--- TOC entry 4892 (class 1259 OID 25079)
+-- TOC entry 4908 (class 1259 OID 25079)
 -- Name: idx_clientes_search; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1677,7 +1821,7 @@ CREATE INDEX idx_clientes_search ON public.clientes USING gin (search_vector);
 
 
 --
--- TOC entry 4893 (class 1259 OID 25078)
+-- TOC entry 4909 (class 1259 OID 25078)
 -- Name: idx_clientes_supervisor; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1685,7 +1829,7 @@ CREATE INDEX idx_clientes_supervisor ON public.clientes USING btree (id_supervis
 
 
 --
--- TOC entry 4920 (class 1259 OID 32793)
+-- TOC entry 4936 (class 1259 OID 32793)
 -- Name: idx_extras_cartera; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1693,7 +1837,7 @@ CREATE INDEX idx_extras_cartera ON public.extras_cartera USING btree (id_cartera
 
 
 --
--- TOC entry 4900 (class 1259 OID 40970)
+-- TOC entry 4916 (class 1259 OID 40970)
 -- Name: idx_historial_cliente_fecha_desc; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1701,7 +1845,7 @@ CREATE INDEX idx_historial_cliente_fecha_desc ON public.historial USING btree (i
 
 
 --
--- TOC entry 4903 (class 1259 OID 57350)
+-- TOC entry 4919 (class 1259 OID 57350)
 -- Name: idx_promesas_historial; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1709,7 +1853,7 @@ CREATE INDEX idx_promesas_historial ON public.promesas USING btree (id_historial
 
 
 --
--- TOC entry 4878 (class 1259 OID 32773)
+-- TOC entry 4894 (class 1259 OID 32773)
 -- Name: idx_tipologias_cartera; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1717,7 +1861,7 @@ CREATE INDEX idx_tipologias_cartera ON public.tipologias USING btree (id_cartera
 
 
 --
--- TOC entry 4946 (class 2620 OID 25075)
+-- TOC entry 4966 (class 2620 OID 25075)
 -- Name: clientes tsvector_update_clientes; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1725,7 +1869,7 @@ CREATE TRIGGER tsvector_update_clientes BEFORE INSERT OR UPDATE ON public.client
 
 
 --
--- TOC entry 4941 (class 2606 OID 25193)
+-- TOC entry 4961 (class 2606 OID 25193)
 -- Name: clientes_bk clientes_bk_lote_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1734,7 +1878,7 @@ ALTER TABLE ONLY public.clientes_bk
 
 
 --
--- TOC entry 4926 (class 2606 OID 25060)
+-- TOC entry 4946 (class 2606 OID 25060)
 -- Name: clientes clientes_id_cartera_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1743,7 +1887,7 @@ ALTER TABLE ONLY public.clientes
 
 
 --
--- TOC entry 4927 (class 2606 OID 25065)
+-- TOC entry 4947 (class 2606 OID 25065)
 -- Name: clientes clientes_id_gestor_asignado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1752,7 +1896,7 @@ ALTER TABLE ONLY public.clientes
 
 
 --
--- TOC entry 4928 (class 2606 OID 25070)
+-- TOC entry 4948 (class 2606 OID 25070)
 -- Name: clientes clientes_id_supervisor_cadena_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1761,7 +1905,7 @@ ALTER TABLE ONLY public.clientes
 
 
 --
--- TOC entry 4929 (class 2606 OID 25092)
+-- TOC entry 4949 (class 2606 OID 25092)
 -- Name: data_extras data_extras_id_cliente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1770,7 +1914,7 @@ ALTER TABLE ONLY public.data_extras
 
 
 --
--- TOC entry 4930 (class 2606 OID 25097)
+-- TOC entry 4950 (class 2606 OID 25097)
 -- Name: data_extras data_extras_id_extra_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1779,7 +1923,7 @@ ALTER TABLE ONLY public.data_extras
 
 
 --
--- TOC entry 4945 (class 2606 OID 32788)
+-- TOC entry 4965 (class 2606 OID 32788)
 -- Name: extras_cartera extras_cartera_id_cartera_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1788,7 +1932,7 @@ ALTER TABLE ONLY public.extras_cartera
 
 
 --
--- TOC entry 4935 (class 2606 OID 25142)
+-- TOC entry 4955 (class 2606 OID 25142)
 -- Name: extras_historial extras_historial_id_historial_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1797,7 +1941,7 @@ ALTER TABLE ONLY public.extras_historial
 
 
 --
--- TOC entry 4922 (class 2606 OID 25012)
+-- TOC entry 4942 (class 2606 OID 25012)
 -- Name: extras extras_id_cartera_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1806,7 +1950,7 @@ ALTER TABLE ONLY public.extras
 
 
 --
--- TOC entry 4938 (class 2606 OID 49180)
+-- TOC entry 4958 (class 2606 OID 49180)
 -- Name: pagos fk_pagos_historial; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1815,7 +1959,7 @@ ALTER TABLE ONLY public.pagos
 
 
 --
--- TOC entry 4942 (class 2606 OID 25208)
+-- TOC entry 4962 (class 2606 OID 25208)
 -- Name: historial_bk historial_bk_lote_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1824,7 +1968,7 @@ ALTER TABLE ONLY public.historial_bk
 
 
 --
--- TOC entry 4931 (class 2606 OID 25113)
+-- TOC entry 4951 (class 2606 OID 25113)
 -- Name: historial historial_id_cliente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1833,7 +1977,7 @@ ALTER TABLE ONLY public.historial
 
 
 --
--- TOC entry 4932 (class 2606 OID 25123)
+-- TOC entry 4952 (class 2606 OID 25123)
 -- Name: historial historial_id_tipologia_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1842,7 +1986,7 @@ ALTER TABLE ONLY public.historial
 
 
 --
--- TOC entry 4933 (class 2606 OID 25118)
+-- TOC entry 4953 (class 2606 OID 25118)
 -- Name: historial historial_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1851,7 +1995,7 @@ ALTER TABLE ONLY public.historial
 
 
 --
--- TOC entry 4934 (class 2606 OID 25128)
+-- TOC entry 4954 (class 2606 OID 25128)
 -- Name: historial historial_lote_origen_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1860,7 +2004,7 @@ ALTER TABLE ONLY public.historial
 
 
 --
--- TOC entry 4944 (class 2606 OID 25236)
+-- TOC entry 4964 (class 2606 OID 25236)
 -- Name: logs_asistencia logs_asistencia_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1869,7 +2013,7 @@ ALTER TABLE ONLY public.logs_asistencia
 
 
 --
--- TOC entry 4943 (class 2606 OID 25223)
+-- TOC entry 4963 (class 2606 OID 25223)
 -- Name: logs_auditoria logs_auditoria_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1878,7 +2022,7 @@ ALTER TABLE ONLY public.logs_auditoria
 
 
 --
--- TOC entry 4925 (class 2606 OID 25042)
+-- TOC entry 4945 (class 2606 OID 25042)
 -- Name: lotes lotes_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1887,7 +2031,7 @@ ALTER TABLE ONLY public.lotes
 
 
 --
--- TOC entry 4939 (class 2606 OID 25175)
+-- TOC entry 4959 (class 2606 OID 25175)
 -- Name: pagos pagos_id_cliente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1896,7 +2040,7 @@ ALTER TABLE ONLY public.pagos
 
 
 --
--- TOC entry 4940 (class 2606 OID 25180)
+-- TOC entry 4960 (class 2606 OID 25180)
 -- Name: pagos pagos_validado_por_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1905,7 +2049,7 @@ ALTER TABLE ONLY public.pagos
 
 
 --
--- TOC entry 4936 (class 2606 OID 25157)
+-- TOC entry 4956 (class 2606 OID 25157)
 -- Name: promesas promesas_id_cliente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1914,7 +2058,7 @@ ALTER TABLE ONLY public.promesas
 
 
 --
--- TOC entry 4937 (class 2606 OID 25162)
+-- TOC entry 4957 (class 2606 OID 25162)
 -- Name: promesas promesas_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1923,7 +2067,7 @@ ALTER TABLE ONLY public.promesas
 
 
 --
--- TOC entry 4923 (class 2606 OID 32768)
+-- TOC entry 4943 (class 2606 OID 32768)
 -- Name: tipologias tipologias_id_cartera_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1932,7 +2076,7 @@ ALTER TABLE ONLY public.tipologias
 
 
 --
--- TOC entry 4924 (class 2606 OID 25025)
+-- TOC entry 4944 (class 2606 OID 25025)
 -- Name: tipologias tipologias_padre_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1941,7 +2085,7 @@ ALTER TABLE ONLY public.tipologias
 
 
 --
--- TOC entry 4921 (class 2606 OID 24989)
+-- TOC entry 4941 (class 2606 OID 24989)
 -- Name: usuarios usuarios_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1949,7 +2093,7 @@ ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.usuarios(id);
 
 
--- Completed on 2026-05-23 20:50:06
+-- Completed on 2026-05-25 04:26:29
 
 --
 -- PostgreSQL database dump complete
