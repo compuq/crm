@@ -37,5 +37,6 @@ abstract class Controller
         $this->pagoDao = new PagoDao();
         $this->promesaDao = new PromesaDao();
         $this->db = Database::getInstance();
+        $this->db->exec("SET TIME ZONE 'America/Guatemala'");
     }
 }

@@ -31,7 +31,9 @@ class Router
         
         // Asistencia
         'asistencia'        => 'AsistenciaController@index',
-        'registrar_asistencia' => 'AsistenciaController@registrar',
+        'registrar_movimiento' => 'AsistenciaController@registrarMovimiento',
+        'reportes_asistencia' => 'AsistenciaController@reportes',
+        'estadisticas_asistencia' => 'AsistenciaController@estadisticas',
         
         // Reportes
         'reportes'          => 'ReporteController@index',
