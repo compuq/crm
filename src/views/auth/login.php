@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="public/images/call.png">
     <title>LEX 360 | Acceso</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -32,6 +33,18 @@
             align-items: center; 
             justify-content: center; 
             margin: 0 auto 1.2rem;
+            width: 56px; 
+            height: 56px; 
+        }
+        .img-lex{
+            border-radius: 10px;
+            display: flex;
+            align-items: center; 
+            justify-content: center; 
+            margin: 0 auto 1.2rem;
+            width: 150px; 
+            height: 100px; 
+
         }
         .brand-icon svg { stroke: #fff; width: 28px; height: 28px; }
         .form-control { 
@@ -63,16 +76,7 @@
 <body>
     <div class="login-card">
         <div class="text-center mb-4">
-            <div class="brand-icon">
-                <!-- Ícono placeholder: Usuario + Lupa (reemplazar por tu SVG/base64 final) -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                    <path d="M11 8v6"></path>
-                    <path d="M8 11h6"></path>
-                </svg>
-            </div>
-            <h2 class="fw-bold text-white mb-1">LEX 360</h2>
+                <img class="img-lex" src="public/images/lex.jpg" alt="Sistema de Recuperación de Carteras">
             <p class="text-secondary small mb-0">Sistema de Gestión de Cartera</p>
         </div>
 

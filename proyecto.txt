@@ -3926,7 +3926,7 @@ public function descargarPlantilla(): void
     $this->session->requireAuth();
     
     $carteraId = (int)($_GET['cartera_id'] ?? 0);
-    if (!$carteraId) { header("Location: index.php?action=carga_clientes"); exit; }
+    if (!$carteraId) { header("Location: ?action=carga_clientes"); exit; }
 
     $stmt = $this->db->prepare("SELECT * FROM carteras WHERE id = :id");
     $stmt->execute(['id' => $carteraId]);
@@ -4009,7 +4009,7 @@ public function descargarPlantilla(): void
     {
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
-        header("Location: index.php?action=carga_clientes");
+        header("Location: ?action=carga_clientes");
         exit;
     }
     // Método auxiliar de redirección
@@ -4018,7 +4018,7 @@ public function descargarPlantilla(): void
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=carga_clientes");
+            header("Location: ?action=carga_clientes");
             exit;
         }
 
@@ -4211,7 +4211,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         
         $carteraId = (int)($_GET['id'] ?? 0);
         if (!$carteraId) {
-            header("Location: index.php?action=lista_carteras");
+            header("Location: ?action=lista_carteras");
             exit;
         }
 
@@ -4244,7 +4244,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
+            header("Location: ?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
             exit;
         }
 
@@ -4296,7 +4296,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $cartera = (int)($_GET['cartera'] ?? 0);
 
         if (!$id || !$cartera) {
-            header("Location: index.php?action=configurar_extras&id=$cartera");
+            header("Location: ?action=configurar_extras&id=$cartera");
             exit;
         }
 
@@ -4317,7 +4317,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
         // Redirige de vuelta a la configuración de esa cartera específica
-        header("Location: index.php?action=configurar_extras&id=" . $carteraId);
+        header("Location: ?action=configurar_extras&id=" . $carteraId);
         exit;
     }
 }
@@ -7613,7 +7613,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\carga\clientes.php
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-header border-secondary d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-white">📥 Carga Masiva de Clientes</h5>
-        <a href="index.php?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
+        <a href="?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
            class="btn btn-outline-info btn-sm"
            <?= empty($carteraId) ? 'disabled style="pointer-events:none;opacity:0.5;"' : '' ?>>
             📥 Descargar Plantilla XLSX
@@ -7631,7 +7631,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\carga\clientes.php
             </div>
         <?php endif; ?>
 
-        <form action="index.php?action=importar_clientes" method="POST" enctype="multipart/form-data">
+        <form action="?action=importar_clientes" method="POST" enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label text-secondary">Seleccionar Cartera *</label>
@@ -7694,7 +7694,7 @@ document.getElementById('selectCartera')?.addEventListener('change', function() 
     const btnPlantilla = document.querySelector('.card-header a[href*="descargar_plantilla"]');
     if (btnPlantilla) {
         if (cid) {
-            btnPlantilla.href = `index.php?action=descargar_plantilla&cartera_id=${cid}`;
+            btnPlantilla.href = `?action=descargar_plantilla&cartera_id=${cid}`;
             btnPlantilla.classList.remove('disabled');
             btnPlantilla.style.pointerEvents = 'auto';
             btnPlantilla.style.opacity = '1';
@@ -8254,7 +8254,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\configuracion\index.php
                             </button>
                         </td>
                         <td>
-                            <a href="index.php?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
+                            <a href="?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
                             ⚙️ Configurar Extras
                             </a>
                         </td>
@@ -9874,7 +9874,7 @@ public function importarGestiones(): void
     $this->session->requireAuth();
     
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header("Location: index.php?action=carga_gestiones");
+        header("Location: ?action=carga_gestiones");
         exit;
     }
     
@@ -9984,7 +9984,7 @@ public function descargarPlantilla(): void
     $this->session->requireAuth();
     
     $carteraId = (int)($_GET['cartera_id'] ?? 0);
-    if (!$carteraId) { header("Location: index.php?action=carga_clientes"); exit; }
+    if (!$carteraId) { header("Location: ?action=carga_clientes"); exit; }
 
     $stmt = $this->db->prepare("SELECT * FROM carteras WHERE id = :id");
     $stmt->execute(['id' => $carteraId]);
@@ -10067,7 +10067,7 @@ public function descargarPlantilla(): void
     {
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
-        header("Location: index.php?action=carga_clientes");
+        header("Location: ?action=carga_clientes");
         exit;
     }
     // Método auxiliar de redirección
@@ -10076,7 +10076,7 @@ public function descargarPlantilla(): void
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=carga_clientes");
+            header("Location: ?action=carga_clientes");
             exit;
         }
 
@@ -10292,7 +10292,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         
         $carteraId = (int)($_GET['id'] ?? 0);
         if (!$carteraId) {
-            header("Location: index.php?action=lista_carteras");
+            header("Location: ?action=lista_carteras");
             exit;
         }
 
@@ -10325,7 +10325,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
+            header("Location: ?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
             exit;
         }
 
@@ -10377,7 +10377,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $cartera = (int)($_GET['cartera'] ?? 0);
 
         if (!$id || !$cartera) {
-            header("Location: index.php?action=configurar_extras&id=$cartera");
+            header("Location: ?action=configurar_extras&id=$cartera");
             exit;
         }
 
@@ -10398,7 +10398,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
         // Redirige de vuelta a la configuración de esa cartera específica
-        header("Location: index.php?action=configurar_extras&id=" . $carteraId);
+        header("Location: ?action=configurar_extras&id=" . $carteraId);
         exit;
     }
 }
@@ -14616,7 +14616,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\carga\clientes.php
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-header border-secondary d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-white">📥 Carga Masiva de Clientes</h5>
-        <a href="index.php?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
+        <a href="?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
            class="btn btn-outline-info btn-sm"
            <?= empty($carteraId) ? 'disabled style="pointer-events:none;opacity:0.5;"' : '' ?>>
             📥 Descargar Plantilla XLSX
@@ -14634,7 +14634,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\carga\clientes.php
             </div>
         <?php endif; ?>
 
-        <form action="index.php?action=importar_clientes" method="POST" enctype="multipart/form-data">
+        <form action="?action=importar_clientes" method="POST" enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label text-secondary">Seleccionar Cartera *</label>
@@ -14697,7 +14697,7 @@ document.getElementById('selectCartera')?.addEventListener('change', function() 
     const btnPlantilla = document.querySelector('.card-header a[href*="descargar_plantilla"]');
     if (btnPlantilla) {
         if (cid) {
-            btnPlantilla.href = `index.php?action=descargar_plantilla&cartera_id=${cid}`;
+            btnPlantilla.href = `?action=descargar_plantilla&cartera_id=${cid}`;
             btnPlantilla.classList.remove('disabled');
             btnPlantilla.style.pointerEvents = 'auto';
             btnPlantilla.style.opacity = '1';
@@ -15438,7 +15438,7 @@ ARCHIVO: C:\xampp\htdocs\crm\src\views\configuracion\index.php
                             </button>
                         </td>
                         <td>
-                            <a href="index.php?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
+                            <a href="?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
                             ⚙️ Configurar Extras
                             </a>
                         </td>

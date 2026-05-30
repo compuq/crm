@@ -13,7 +13,7 @@
 <div class="modal fade" id="modalNuevoCampo" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark border-secondary">
-            <form action="index.php?action=guardar_campo_extra" method="POST">
+            <form action="?action=guardar_campo_extra" method="POST">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title text-white">Nuevo Campo Extra</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

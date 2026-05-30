@@ -11,7 +11,7 @@ class Router
         
         // Dashboard
         'dashboard'         => 'DashboardController@index',
-        
+        'dashboard_stats'   => 'DashboardController@stats',
         // Clientes & Gestión
         'clientes'          => 'ClienteController@listar',
         'registrar_gestion' => 'GestionController@registrarGestion',

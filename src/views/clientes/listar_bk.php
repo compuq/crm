@@ -1,409 +1,67 @@
 <!-- views/clientes/listar.php -->
-
-<?php
-$hoy = [];
-$atrasados = [];
-$asignados = [];
-$programados = [];
-//$incumplidas =[];
-$comp = [];
-//$pagg = [];
-$userRole=$user['role']??'';
-foreach ($clientes as $cliente) {
-
-    $fecha = $cliente['fecha_proxima_llamada'] ?? null;
-    $estatus = $cliente['ultimo_estatus'] ?? null;
-
-    // ===== ASIGNADOS =====
-    if (empty($fecha)) {
-        $asignados[] = $cliente;
-        continue;
-    }
-
-    $timestamp = strtotime($fecha);
-
-    // ===== HOY =====
-    if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
-
-        $hoy[] = $cliente;
-
-    }
-
-    // ===== ATRASADOS =====
-    elseif (date('Y-m-d', $timestamp) < date('Y-m-d')) {
-
-        $atrasados[] = $cliente;
-
-    }
-
-    // ===== PROGRAMADOS =====
-    elseif (date('Y-m-d', $timestamp) > date('Y-m-d')) {
-
-        $programados[] = $cliente;
-
-    }
-
-    // ===== COMPROMISOS =====
-    if ($estatus === 'COMP') {
-        $comp[] = $cliente;
-    }
-
-}
-function renderTablaClientes($clientes, $configExtras = [])
-{
-?>
-<div class="table-responsive">
-    <table class="table table-dark table-hover align-middle mb-0">
-        <thead>
-            <tr>
-                <th class="text-secondary text-uppercase small">Cuenta</th>
-                <th class="text-secondary text-uppercase small">Nombre</th>
-                <th class="text-secondary text-uppercase small">Identificación</th>
-                <th class="text-secondary text-uppercase small">Saldo</th>
-                <th class="text-secondary text-uppercase small">Teléfono</th>
-                <th class="text-secondary text-uppercase small">Próxima Llamada</th>
-                <th class="text-secondary text-uppercase small">Estatus</th>
-                <th class="text-secondary text-uppercase small">Tipología</th>
-
-                <?php if (!empty($configExtras)): ?>
-                    <?php foreach ($configExtras as $extra): ?>
-                        <th class="text-secondary text-uppercase small">
-                            <?= htmlspecialchars($extra['etiqueta']) ?>
-                        </th>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-
-                <th class="text-center text-secondary text-uppercase small">Acciones</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach($clientes as $cliente): ?>
-
-            <?php
-
-            // ===== FECHA =====
-            $fechaTexto = 'SIN PROGRAMACIÓN';
-            $claseFecha = 'text-secondary';
-
-            if (!empty($cliente['fecha_proxima_llamada'])) {
-
-                $timestamp = strtotime($cliente['fecha_proxima_llamada']);
-
-                $fechaTexto = date('d/m/Y h:i A', $timestamp);
-
-                // Si es HOY y ya pasó la hora → rojo
-                if (
-                    date('Y-m-d', $timestamp) === date('Y-m-d')
-                    && $timestamp < time()
-                ) {
-                    $claseFecha = 'text-danger fw-bold';
-                }
-            }
-
-            // ===== ESTATUS =====
-            $estatus = $cliente['ultimo_estatus'] ?? null;
-
-            switch ($estatus) {
-
-                case 'COMP':
-                    $badge = 'warning';
-                    $textoEstatus = '🤝 COMPROMISO';
-                    break;
-
-                case 'SINC':
-                    $badge = 'secondary';
-                    $textoEstatus = '🚫 SIN COMPROMISO';
-                    break;
-
-                case 'PAGG':
-                    $badge = 'info';
-                    $textoEstatus = '💳 PAGO PENDIENTE';
-                    break;
-
-                case 'PAGO':
-                    $badge = 'success';
-                    $textoEstatus = '✅ PAGO CONFIRMADO';
-                    break;
-
-                default:
-                    $badge = 'dark';
-                    $textoEstatus = '📄 SIN REGISTRO';
-                    break;
-            }
-
-            // ===== TIPOLOGÍA =====
-            $tipologia = !empty($cliente['ultima_tipologia'])
-                ? $cliente['ultima_tipologia']
-                : 'SIN TIPOLOGÍA';
-
-            ?>
-
-            <tr>
-
-                <td class="fw-medium">
-                    <?= htmlspecialchars($cliente['cuenta'] ?? 'SIN REGISTRO') ?>
-                </td>
-
-                <td>
-                    <?= htmlspecialchars($cliente['nombre'] ?? 'SIN REGISTRO') ?>
-                </td>
-
-                <td>
-                    <?= htmlspecialchars($cliente['identificacion'] ?? 'SIN REGISTRO') ?>
-                </td>
-
-                <td class="text-warning">
-                    Q<?= number_format($cliente['saldo'] ?? 0, 2) ?>
-                </td>
-
-                <td>
-                    <?= htmlspecialchars($cliente['telefono_1'] ?? 'NO DISPONIBLE') ?>
-                </td>
-
-                <td class="<?= $claseFecha ?>">
-                    <?= $fechaTexto ?>
-                </td>
-
-                <td>
-                    <span class="badge bg-<?= $badge ?>">
-                        <?= $textoEstatus ?>
-                    </span>
-                </td>
-
-                <td>
-                    <?= htmlspecialchars($tipologia) ?>
-                </td>
-
-                <?php if (!empty($configExtras)): ?>
-
-                    <?php foreach ($configExtras as $extra):
-
-                        $val = 'SIN INFORMACIÓN';
-
-                        if (!empty($cliente['data_extras'])) {
-
-                            $extras = is_string($cliente['data_extras'])
-                                ? json_decode($cliente['data_extras'], true)
-                                : $cliente['data_extras'];
-
-                            if (
-                                is_array($extras)
-                                && isset($extras[$extra['nombre_campo']])
-                                && $extras[$extra['nombre_campo']] !== ''
-                            ) {
-                                $val = $extras[$extra['nombre_campo']];
-                            }
-                        }
-
-                    ?>
-
-                        <td class="small text-secondary">
-                            <?= htmlspecialchars($val) ?>
-                        </td>
-
-                    <?php endforeach; ?>
-
-                <?php endif; ?>
-
-                <td class="text-center">
-
-                    <button class="btn btn-sm btn-lex-primary"
-                        onclick='abrirModalGestion(
-                            <?= $cliente["id"] ?>,
-                            "<?= addslashes($cliente["nombre"] ?? "") ?>",
-                            "<?= addslashes($cliente["identificacion"] ?? "") ?>",
-                            <?= $cliente["id_cartera"] ?? "null" ?>
-                        )'>
-
-                        📞 Gestionar
-
-                    </button>
-
-                </td>
-
-            </tr>
-
-        <?php endforeach; ?>
-
-        <?php if(empty($clientes)): ?>
-
-            <tr>
-                <td colspan="<?= 9 + count($configExtras) ?>"
-                    class="text-center text-secondary py-4">
-
-                    No se encontraron registros.
-
-                </td>
-            </tr>
-
-        <?php endif; ?>
-
-        </tbody>
-    </table>
-</div>
-<?php
-}
-?>
-
 <div class="card bg-dark border-secondary p-4 mb-4">
-
     <div class="d-flex justify-content-between align-items-center mb-3">
-
         <h4 class="mb-0 fw-bold">👥 Gestión de Clientes</h4>
-
         <form method="GET" action="index.php" class="d-flex gap-2">
-
             <input type="hidden" name="action" value="clientes">
-
-            <input type="text"
-                   name="q"
-                   class="form-control bg-dark text-white border-secondary"
-                   placeholder="Buscar por nombre o identificación..."
-                   value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
-
-            <button type="submit" class="btn btn-lex-primary">
-                🔍 Buscar
-            </button>
-
+            <input type="text" name="q" class="form-control bg-dark text-white border-secondary" placeholder="Buscar por nombre o identificación..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+            <button type="submit" class="btn btn-lex-primary">🔍 Buscar</button>
         </form>
-
     </div>
 
-    <!-- PESTAÑAS -->
-    <ul class="nav nav-tabs mb-4 border-secondary" role="tablist">
-
-        <li class="nav-item">
-            <button class="nav-link active"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-hoy"
-                    type="button">
-
-                📅 Hoy
-                <span class="badge bg-secondary ms-1">
-                    <?= count($hoy ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-atrasados"
-                    type="button">
-
-                🔥 Atrasados
-                <span class="badge bg-danger ms-1">
-                    <?= count($atrasados ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-asignados"
-                    type="button">
-
-                👤 Asignados
-                <span class="badge bg-primary ms-1">
-                    <?= count($asignados ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-programados"
-                    type="button">
-
-                🗓️ Programados
-                <span class="badge bg-info ms-1">
-                    <?= count($programados ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-comp"
-                    type="button">
-
-                🤝 Compromisos
-                <span class="badge bg-warning text-dark ms-1">
-                    <?= count($comp ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-comp"
-                    type="button">
-
-                🚫 Incumplimiento
-                <span class="badge bg-danger text-dark ms-1">
-                    <?= count($incumplidas ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-        <li class="nav-item">
-            <button class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#tab-pagg"
-                    type="button">
-
-                💳 PAGG
-                <span class="badge bg-primary ms-1">
-                    <?= count($pagg ?? []) ?>
-                </span>
-
-            </button>
-        </li>
-
-    </ul>
-    <!-- CONTENIDO -->
-    <div class="tab-content">
-
-        <div class="tab-pane fade show active" id="tab-hoy">
-            <?php renderTablaClientes($hoy ?? [], $configExtras); ?>
-        </div>
-
-        <div class="tab-pane fade" id="tab-atrasados">
-            <?php renderTablaClientes($atrasados ?? [], $configExtras); ?>
-        </div>
-
-        <div class="tab-pane fade" id="tab-asignados">
-            <?php renderTablaClientes($asignados ?? [], $configExtras); ?>
-        </div>
-
-        <div class="tab-pane fade" id="tab-programados">
-            <?php renderTablaClientes($programados ?? [], $configExtras); ?>
-        </div>
-
-        <div class="tab-pane fade" id="tab-comp">
-            <?php renderTablaClientes($comp ?? [], $configExtras); ?>
-        </div>
-
-        <div class="tab-pane fade" id="tab-pagg">
-            <?php renderTablaClientes($pagg ?? [], $configExtras); ?>
-        </div>
-
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="text-secondary text-uppercase small">Cuenta</th>
+                    <th class="text-secondary text-uppercase small">Nombre</th>
+                    <th class="text-secondary text-uppercase small">Identificación</th>
+                    <th class="text-secondary text-uppercase small">Saldo</th>
+                    <th class="text-secondary text-uppercase small">Teléfono</th>
+                    <th class="text-secondary text-uppercase small">Próxima Llamada</th>
+                    <?php if (!empty($configExtras)): ?>
+                        <?php foreach ($configExtras as $extra): ?>
+                            <th class="text-secondary text-uppercase small"><?= htmlspecialchars($extra['etiqueta']) ?></th>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <th class="text-center text-secondary text-uppercase small">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($clientes as $cliente): ?>
+                <tr>
+                    <td class="fw-medium"><?= htmlspecialchars($cliente['cuenta']) ?></td>
+                    <td><?= htmlspecialchars($cliente['nombre']) ?></td>
+                    <td><?= htmlspecialchars($cliente['identificacion']) ?></td>
+                    <td class="text-warning">Q<?= number_format($cliente['saldo'], 2) ?></td>
+                    <td><?= htmlspecialchars($cliente['telefono_1']) ?></td>
+                    <td><?= htmlspecialchars($cliente['fecha_proxima_llamada'] ?? 'Sin fecha') ?></td>
+                    <?php if (!empty($configExtras)): ?>
+                        <?php foreach ($configExtras as $extra): 
+                            $val = '-';
+                            if (!empty($cliente['data_extras'])) {
+                                $extras = is_string($cliente['data_extras']) ? json_decode($cliente['data_extras'], true) : $cliente['data_extras'];
+                                if (is_array($extras) && isset($extras[$extra['nombre_campo']])) $val = $extras[$extra['nombre_campo']];
+                            }
+                        ?>
+                        <td class="small text-secondary"><?= htmlspecialchars($val) ?></td>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-lex-primary" 
+                                onclick='abrirModalGestion(<?= $cliente['id'] ?>, "<?= addslashes($cliente['nombre']) ?>", "<?= addslashes($cliente['identificacion'] ?? '') ?>", <?= $cliente['id_cartera'] ?? 'null' ?>)'>
+                            📞 Gestionar
+                        </button>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if(empty($clientes)): ?>
+                    <tr><td colspan="<?= 6 + count($configExtras) ?>" class="text-center text-secondary py-4">No se encontraron clientes.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
-
 </div>
-
 
 <!-- ========================================== -->
 <!-- MODAL DE GESTIÓN                           -->
@@ -536,12 +194,7 @@ function renderTablaClientes($clientes, $configExtras = [])
             </div>
             <div class="modal-footer border-secondary bg-secondary bg-opacity-10">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <?php if ($userRole=='gestor'):?>
                 <button type="button" class="btn btn-success fw-bold px-4" onclick="guardarGestion()">💾 Guardar Gestión</button>
-                <?php endif;
-                if ($userRole!=='gestor'):?>
-                <button type="button" class="btn btn-success fw-bold px-4" onclick="alert('No disponible para este usuario.')">🚫 NO disponible</button>
-                <?php endif;?>
             </div>
         </div>
     </div>

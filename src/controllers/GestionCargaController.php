@@ -87,7 +87,7 @@ class GestionCargaController extends Controller
 
         } catch (\Exception $e) {
             $this->db->rollBack();
-            return ['success' => false, 'errores' => ["Error crítico: " . $e->getMessage()]];
+                return ['success' => false, 'errores' => ["Error crítico: " . $e->getMessage()]];
         }
     }
     /**

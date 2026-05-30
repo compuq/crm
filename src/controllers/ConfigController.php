@@ -16,7 +16,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         
         $carteraId = (int)($_GET['id'] ?? 0);
         if (!$carteraId) {
-            header("Location: index.php?action=lista_carteras");
+            header("Location: ?action=lista_carteras");
             exit;
         }
 
@@ -49,7 +49,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
+            header("Location: ?action=configurar_extras&id=" . ($_POST['id_cartera'] ?? 0));
             exit;
         }
 
@@ -101,7 +101,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $cartera = (int)($_GET['cartera'] ?? 0);
 
         if (!$id || !$cartera) {
-            header("Location: index.php?action=configurar_extras&id=$cartera");
+            header("Location: ?action=configurar_extras&id=$cartera");
             exit;
         }
 
@@ -122,7 +122,7 @@ class ConfigController extends \LEX360\Core\Controller // O tu clase base corres
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
         // Redirige de vuelta a la configuración de esa cartera específica
-        header("Location: index.php?action=configurar_extras&id=" . $carteraId);
+        header("Location: ?action=configurar_extras&id=" . $carteraId);
         exit;
     }
 }

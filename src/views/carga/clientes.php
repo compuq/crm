@@ -12,7 +12,7 @@
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-header border-secondary d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-white">📥 Carga Masiva de Clientes</h5>
-        <a href="index.php?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
+        <a href="?action=descargar_plantilla&cartera_id=<?= $carteraId ?? '' ?>" 
            class="btn btn-outline-info btn-sm"
            <?= empty($carteraId) ? 'disabled style="pointer-events:none;opacity:0.5;"' : '' ?>>
             📥 Descargar Plantilla XLSX
@@ -30,7 +30,7 @@
             </div>
         <?php endif; ?>
 
-        <form action="index.php?action=importar_clientes" method="POST" enctype="multipart/form-data">
+        <form action="?action=importar_clientes" method="POST" enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label text-secondary">Seleccionar Cartera *</label>
@@ -93,7 +93,7 @@ document.getElementById('selectCartera')?.addEventListener('change', function() 
     const btnPlantilla = document.querySelector('.card-header a[href*="descargar_plantilla"]');
     if (btnPlantilla) {
         if (cid) {
-            btnPlantilla.href = `index.php?action=descargar_plantilla&cartera_id=${cid}`;
+            btnPlantilla.href = `?action=descargar_plantilla&cartera_id=${cid}`;
             btnPlantilla.classList.remove('disabled');
             btnPlantilla.style.pointerEvents = 'auto';
             btnPlantilla.style.opacity = '1';

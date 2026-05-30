@@ -79,7 +79,7 @@ public function importarGestiones(): void
     $this->session->requireAuth();
     
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header("Location: index.php?action=carga_gestiones");
+        header("Location: ?action=carga_gestiones");
         exit;
     }
     
@@ -189,7 +189,7 @@ public function descargarPlantilla(): void
     $this->session->requireAuth();
     
     $carteraId = (int)($_GET['cartera_id'] ?? 0);
-    if (!$carteraId) { header("Location: index.php?action=carga_clientes"); exit; }
+    if (!$carteraId) { header("Location: ?action=carga_clientes"); exit; }
 
     $stmt = $this->db->prepare("SELECT * FROM carteras WHERE id = :id");
     $stmt->execute(['id' => $carteraId]);
@@ -272,7 +272,7 @@ public function descargarPlantilla(): void
     {
         $_SESSION['flash_message'] = $msg;
         $_SESSION['flash_type'] = $tipo;
-        header("Location: index.php?action=carga_clientes");
+        header("Location: ?action=carga_clientes");
         exit;
     }
     // Método auxiliar de redirección
@@ -281,7 +281,7 @@ public function descargarPlantilla(): void
         $this->session->requireAuth();
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?action=carga_clientes");
+            header("Location: ?action=carga_clientes");
             exit;
         }
 

@@ -41,7 +41,7 @@
                             </button>
                         </td>
                         <td>
-                            <a href="index.php?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
+                            <a href="?action=configurar_extras&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-warning">
                             ⚙️ Configurar Extras
                             </a>
                         </td>

@@ -2,7 +2,7 @@
 namespace LEX360\Controllers;
 
 use LEX360\Core\Controller;
-
+use PDO;
 class ClienteController extends Controller
 {
 public function listar(): void
@@ -24,7 +24,9 @@ public function listar(): void
     
     // 2. Obtener clientes
     $clientes = $this->clienteDao->findByRole($user['id'], $user['role'], $search);
-    
+    $pagg = $this->clienteDao->findNoConfirm($user['id'], $user['role'], '');
+    $incumplidas = $this->clienteDao->findNoDone($user['id'], $user['role'], '');
+
     // 3. Variables para el layout
     $pageTitle = "Gestión de Clientes | LEX 360";
     
@@ -83,20 +85,82 @@ public function actualizar(): void
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     }
-    public function getDetalle(): void
-    {
-        header('Content-Type: application/json');
-        $this->session->requireAuth();
-        
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) { echo json_encode([]); exit; }
-        
-        $stmt = $this->db->prepare("
-            SELECT id, nombre, identificacion, cuenta, saldo, telefono_1, telefono_2, estado, fecha_ultima_gestion, data_extras
-            FROM clientes WHERE id = :id
-        ");
-        $stmt->execute(['id' => $id]);
-        echo json_encode($stmt->fetch());
+public function getDetalle(): void
+{
+    header('Content-Type: application/json');
+    $this->session->requireAuth();
+
+    $id = (int)($_GET['id'] ?? 0);
+
+    if (!$id) {
+        echo json_encode([]);
         exit;
     }
-}
+
+    $stmt = $this->db->prepare("
+        SELECT
+            id,
+            nombre,
+            identificacion,
+            cuenta,
+            saldo_inicial,
+            saldo,
+            telefono_1,
+            telefono_2,
+            estado,
+            fecha_ultima_gestion,
+            data_extras,
+            id_cartera
+        FROM clientes
+        WHERE id = :id
+    ");
+
+    $stmt->execute(['id' => $id]);
+    $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$cliente) {
+        echo json_encode([]);
+        exit;
+    }
+
+    // Obtener configuración de extras
+    $stmt = $this->db->prepare("
+        SELECT nombre_campo, etiqueta
+        FROM extras_cartera
+        WHERE id_cartera = :cid
+          AND activo = true
+        ORDER BY orden
+    ");
+
+    $stmt->execute([
+        'cid' => $cliente['id_cartera']
+    ]);
+
+    $configExtras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Crear mapa nombre_campo => etiqueta
+    $mapaEtiquetas = [];
+
+    foreach ($configExtras as $extra) {
+        $mapaEtiquetas[$extra['nombre_campo']] = $extra['etiqueta'];
+    }
+
+    // Transformar data_extras
+    $extras = json_decode($cliente['data_extras'] ?? '{}', true);
+
+    if (is_array($extras)) {
+        $extrasTransformados = [];
+
+        foreach ($extras as $campo => $valor) {
+
+            $nuevoNombre = $mapaEtiquetas[$campo] ?? $campo;
+
+            $extrasTransformados[$nuevoNombre] = $valor;
+        }
+
+        $cliente['data_extras'] = $extrasTransformados;
+    }
+
+    echo json_encode($cliente);
+    exit;
+}}
