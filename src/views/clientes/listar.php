@@ -64,6 +64,7 @@ function renderTablaClientes($clientes, $configExtras = [])
                 <th class="text-secondary text-uppercase small">Próxima Llamada</th>
                 <th class="text-secondary text-uppercase small">Estatus</th>
                 <th class="text-secondary text-uppercase small">Tipología</th>
+                <th class="text-secondary text-uppercase small">Gestor</th>
 
                 <?php if (!empty($configExtras)): ?>
                     <?php foreach ($configExtras as $extra): ?>
@@ -175,6 +176,9 @@ function renderTablaClientes($clientes, $configExtras = [])
                 <td>
                     <?= htmlspecialchars($tipologia) ?>
                 </td>
+                <td>
+                    <?= htmlspecialchars($cliente['usuario'] ?? 'NO DISPONIBLE') ?>
+                </td>
 
                 <?php if (!empty($configExtras)): ?>
 
@@ -252,7 +256,10 @@ function renderTablaClientes($clientes, $configExtras = [])
     <div class="d-flex justify-content-between align-items-center mb-3">
 
         <h4 class="mb-0 fw-bold">👥 Gestión de Clientes</h4>
-
+<a href="index.php?action=exportar_clientes&q=<?= urlencode($_GET['q'] ?? '') ?>"
+   class="btn btn-success">
+    📊 Exportar Excel
+</a>
         <form method="GET" action="index.php" class="d-flex gap-2">
 
             <input type="hidden" name="action" value="clientes">

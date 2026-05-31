@@ -1,6 +1,8 @@
 <?php
 namespace LEX360\Controllers;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use LEX360\Core\Controller;
 use PDO;
 class ClienteController extends Controller
@@ -163,4 +165,186 @@ public function getDetalle(): void
 
     echo json_encode($cliente);
     exit;
-}}
+}
+
+public function exportarClientes(): void
+{
+    $this->session->requireAuth();
+    $user = $this->session->getUser();
+    $search = $_GET['q'] ?? '';
+    
+    // Obtener cartera del usuario (ajusta según tu lógica de sesión/DAO)
+    $carteraId = $user['id_cartera'] ?? null; // O $this->clienteDao->getCarteraByUser($user['id'])
+
+    // ✅ 1. Obtener config de extras ANTES de renderizar la vista
+    $configExtras = [];
+    if (!empty($carteraId)) {
+        $stmt = $this->db->prepare("SELECT nombre_campo, etiqueta FROM extras_cartera WHERE id_cartera = :cid AND activo = true ORDER BY orden");
+        $stmt->execute(['cid' => $carteraId]);
+        $configExtras = $stmt->fetchAll();
+    }
+    
+    // 2. Obtener clientes
+    $clientes = $this->clienteDao->findByRole($user['id'], $user['role'], $search);
+    $pagg = $this->clienteDao->findNoConfirm($user['id'], $user['role'], '');
+    $incumplidas = $this->clienteDao->findNoDone($user['id'], $user['role'], '');
+    $hoy = [];
+    $atrasados = [];
+    $asignados = [];
+    $programados = [];
+    //$incumplidas =[];
+    $comp = [];
+    //$pagg = [];
+    $userRole=$user['role']??'';
+    foreach ($clientes as $cliente) {
+
+        $fecha = $cliente['fecha_proxima_llamada'] ?? null;
+        $estatus = $cliente['ultimo_estatus'] ?? null;
+
+        // ===== ASIGNADOS =====
+        if (empty($fecha)) {
+            $asignados[] = $cliente;
+            continue;
+        }
+        
+        $timestamp = strtotime($fecha);
+
+        // ===== HOY =====
+        if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
+
+            $hoy[] = $cliente;
+
+        }
+
+        // ===== ATRASADOS =====
+        elseif (date('Y-m-d', $timestamp) < date('Y-m-d')) {
+
+            $atrasados[] = $cliente;
+
+        }
+
+        // ===== PROGRAMADOS =====
+        elseif (date('Y-m-d', $timestamp) > date('Y-m-d')) {
+
+            $programados[] = $cliente;
+
+        }
+
+        // ===== COMPROMISOS =====
+        if ($estatus === 'COMP') {
+            $comp[] = $cliente;
+        }
+
+    }
+
+    //$hoy          = $this->clienteDao->obtenerHoy($user['id'], $user['rol'], $search);
+    //$atrasados    = $this->clienteDao->obtenerAtrasados($user['id'], $user['rol'], $search);
+    //$asignados    = $this->clienteDao->obtenerAsignados($user['id'], $user['rol'], $search);
+    //$programados  = $this->clienteDao->obtenerProgramados($user['id'], $user['rol'], $search);
+    //$comp         = $this->clienteDao->obtenerCompromisos($user['id'], $user['rol'], $search);
+    //$incumplidas  = $this->clienteDao->obtenerIncumplidas($user['id'], $user['rol'], $search);
+    //$pagg         = $this->clienteDao->findNoConfirm($user['id'], $user['rol'], $search);
+
+    $spreadsheet = new Spreadsheet();
+
+    // Hoja 1
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Hoy');
+    $this->llenarHoja($sheet, $hoy);
+
+    // Hoja 2
+    $sheet2 = $spreadsheet->createSheet();
+    $sheet2->setTitle('Atrasados');
+    $this->llenarHoja($sheet2, $atrasados);
+
+    // Hoja 3
+    $sheet3 = $spreadsheet->createSheet();
+    $sheet3->setTitle('Asignados');
+    $this->llenarHoja($sheet3, $asignados);
+
+    // Hoja 4
+    $sheet4 = $spreadsheet->createSheet();
+    $sheet4->setTitle('Programados');
+    $this->llenarHoja($sheet4, $programados);
+
+    // Hoja 5
+    $sheet5 = $spreadsheet->createSheet();
+    $sheet5->setTitle('Compromisos');
+    $this->llenarHoja($sheet5, $comp);
+
+    // Hoja 6
+    $sheet6 = $spreadsheet->createSheet();
+    $sheet6->setTitle('Incumplidas');
+    $this->llenarHoja($sheet6, $incumplidas);
+
+    // Hoja 7
+    $sheet7 = $spreadsheet->createSheet();
+    $sheet7->setTitle('PAGG');
+    $this->llenarHoja($sheet7, $pagg);
+
+    // Dejar activa la primera hoja
+    $spreadsheet->setActiveSheetIndex(0);
+
+    $filename = 'clientes_' . date('Ymd_His') . '.xlsx';
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+
+private function llenarHoja($sheet, array $clientes): void
+{
+    $headers = [
+        'ID',
+        'gestor',
+        'supervisor',
+        'Nombre',
+        'Identificación',
+        'Cuenta',
+        'Saldo Inicial',
+        'Saldo',
+        'Teléfono 1',
+        'Teléfono 2',
+        'Estado',
+        'Última Gestión',
+        'Próxima Llamada',
+        'Tipología'
+    ];
+
+    $col = 'A';
+
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . '1', $header);
+        $col++;
+    }
+
+    $fila = 2;
+
+    foreach ($clientes as $c) {
+
+        $sheet->setCellValue("A{$fila}", $c['id']);
+        $sheet->setCellValue("B{$fila}", $c['usuario']);
+        $sheet->setCellValue("C{$fila}", $c['supervisor']);
+        $sheet->setCellValue("D{$fila}", $c['nombre']);
+        $sheet->setCellValue("E{$fila}", $c['identificacion']);
+        $sheet->setCellValue("F{$fila}", $c['cuenta']);
+        $sheet->setCellValue("G{$fila}", $c['saldo_inicial']);
+        $sheet->setCellValue("H{$fila}", $c['saldo']);
+        $sheet->setCellValue("I{$fila}", $c['telefono_1']);
+        $sheet->setCellValue("J{$fila}", $c['telefono_2']);
+        $sheet->setCellValue("K{$fila}", $c['estado']);
+        $sheet->setCellValue("L{$fila}", $c['fecha_ultima_gestion']);
+        $sheet->setCellValue("M{$fila}", $c['fecha_proxima_llamada']);
+        $sheet->setCellValue("N{$fila}", $c['ultima_tipologia']);
+        $fila++;
+    }
+
+    foreach (range('A', 'L') as $column) {
+        $sheet->getColumnDimension($column)->setAutoSize(true);
+    }
+}
+}

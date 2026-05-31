@@ -102,7 +102,8 @@ class ClienteDao extends BaseDao
                 c.estado,
                 c.fecha_ultima_gestion,
                 c.data_extras,
-
+                u.usuario,
+                sup.usuario as supervisor,
                 h.fecha_proxima_llamada,
                 h.estatus AS ultimo_estatus,
                 t.nombre AS ultima_tipologia
@@ -120,6 +121,9 @@ class ClienteDao extends BaseDao
 
             LEFT JOIN tipologias t 
             ON t.id = h.id_tipologia
+            LEFT JOIN usuarios u on c.id_gestor_asignado = u.id
+            LEFT JOIN usuarios sup
+            ON sup.id = c.id_supervisor_cadena
 
             $where";
 
@@ -148,9 +152,16 @@ class ClienteDao extends BaseDao
     }
     public function findNoConfirm(int $userId, string $role, string $search = ''): array
     {
-        $where = ($role === 'gestor') 
-            ? "WHERE c.id_gestor_asignado = :uid" 
-            : "WHERE c.id_supervisor_cadena = :uid";
+        if (in_array($role, ['admin', 'supervisor_general'])) {
+            $where = "WHERE 1=1";
+            $params = [];
+        } elseif ($role === 'gestor') {
+            $where = "WHERE c.id_gestor_asignado = :uid";
+            $params = ['uid' => $userId];
+        } else {
+            $where = "WHERE c.id_supervisor_cadena = :uid";
+            $params = ['uid' => $userId];
+        }
 
         $sql = "
             SELECT 
@@ -165,7 +176,8 @@ class ClienteDao extends BaseDao
                 c.estado,
                 c.fecha_ultima_gestion,
                 c.data_extras,
-
+                u.usuario,
+                sup.usuario as supervisor,
                 h.fecha_proxima_llamada,
                 h.estatus AS ultimo_estatus,
                 t.nombre AS ultima_tipologia
@@ -175,13 +187,15 @@ class ClienteDao extends BaseDao
             LEFT JOIN historial h 
             ON h.id_cliente = c.id
             AND h.estatus = 'PAGG'
-
             LEFT JOIN tipologias t 
             ON t.id = h.id_tipologia
+            LEFT JOIN usuarios u on c.id_gestor_asignado = u.id
+            LEFT JOIN usuarios sup
+            ON sup.id = c.id_supervisor_cadena
+            
 
             $where and h.estatus is not null ";
 
-        $params = ['uid' => $userId];
 
         if (!empty($search)) {
             $sql .= " AND (
@@ -243,7 +257,8 @@ class ClienteDao extends BaseDao
                 c.estado,
                 c.fecha_ultima_gestion,
                 c.data_extras,
-
+                u.usuario,
+                sup.usuario as supervisor,
                 p.id AS id_promesa,
                 p.monto_prometido,
                 p.fecha_compromiso,
@@ -270,6 +285,9 @@ class ClienteDao extends BaseDao
 
             LEFT JOIN tipologias t 
                 ON t.id = h.id_tipologia
+            LEFT JOIN usuarios u on c.id_gestor_asignado = u.id
+            LEFT JOIN usuarios sup
+            ON sup.id = c.id_supervisor_cadena
 
             $where
         ";
@@ -486,4 +504,76 @@ public function getSaldoCarteras(
 
     return $data;
 }
+public function findByRoleExcel(int $userId, string $role, string $search = ''): array
+{
+    if (in_array($role, ['admin', 'supervisor_general'])) {
+        $where = "WHERE 1=1";
+        $params = [];
+    } elseif ($role === 'gestor') {
+        $where = "WHERE c.id_gestor_asignado = :uid";
+        $params = ['uid' => $userId];
+    } else {
+        $where = "WHERE c.id_supervisor_cadena = :uid";
+        $params = ['uid' => $userId];
+    }
+
+    $sql = "
+        SELECT
+            c.id,
+            c.nombre,
+            c.identificacion,
+            c.cuenta,
+            c.saldo_inicial,
+            c.saldo,
+            c.telefono_1,
+            c.telefono_2,
+            c.estado,
+            c.fecha_ultima_gestion,
+            u.usuario,
+            sup.usuario as supervisor,
+            h.fecha_proxima_llamada,
+            h.estatus,
+            t.nombre AS tipologia
+
+        FROM clientes c
+
+        LEFT JOIN historial h
+        ON h.id = (
+            SELECT hh.id
+            FROM historial hh
+            WHERE hh.id_cliente = c.id
+            ORDER BY hh.id DESC
+            LIMIT 1
+        )
+
+        LEFT JOIN tipologias t
+            ON t.id = h.id_tipologia
+
+        LEFT JOIN usuarios u
+            ON u.id = c.id_gestor_asignado
+
+        LEFT JOIN usuarios sup
+            ON sup.id = c.id_supervisor_cadena
+
+        $where
+    ";
+
+    if (!empty($search)) {
+        $sql .= " AND (
+            c.nombre ILIKE :search
+            OR c.identificacion ILIKE :search
+            OR c.cuenta ILIKE :search
+        )";
+
+        $params['search'] = "%{$search}%";
+    }
+
+    $sql .= " ORDER BY c.id DESC";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }

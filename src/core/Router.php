@@ -78,6 +78,7 @@ class Router
         'get_cliente_detalle' => 'ClienteController@getDetalle',
         'get_promesas_pendientes' => 'GestionController@getPromesasPendientes',
         'get_proximas_llamadas' => 'GestionController@getProximasLlamadas',
+        'exportar_clientes' => 'ClienteController@exportarClientes',
         //Reportes
         // Reportes
         'reportes_gestiones' => 'ReporteController@generarReporte',
