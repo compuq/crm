@@ -135,16 +135,13 @@ class ClienteDao extends BaseDao
         
 
         if (!empty($search)) {
-            $sql .= " AND (
-                c.nombre ILIKE :search 
-                OR c.identificacion ILIKE :search 
-                OR c.cuenta ILIKE :search
-            )";
-            $params['search'] = "%{$search}%";
-        }
+        $sql .= "
+            AND c.search_vector @@ websearch_to_tsquery('spanish', :search)
+        ";            $params['search'] = "%{$search}%";
+                }
 
         // Prioridad: primero los que NO han sido gestionados hoy, luego los más antiguos
-        $sql .= " ORDER BY fecha_ultima_gestion ASC NULLS FIRST, id DESC LIMIT 200";
+        $sql .= " ORDER BY fecha_ultima_gestion ASC NULLS FIRST, id DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -206,7 +203,7 @@ class ClienteDao extends BaseDao
             $params['search'] = "%{$search}%";
         }
 
-        $sql .= " ORDER BY c.fecha_ultima_gestion ASC NULLS FIRST, c.id DESC LIMIT 200";
+        $sql .= " ORDER BY c.fecha_ultima_gestion ASC NULLS FIRST, c.id DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -309,7 +306,6 @@ class ClienteDao extends BaseDao
             ORDER BY 
                 p.fecha_compromiso ASC,
                 c.id DESC
-            LIMIT 200
         ";
 
         $stmt = $this->db->prepare($sql);

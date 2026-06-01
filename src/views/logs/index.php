@@ -1,6 +1,17 @@
 <!-- Auditoría del Sistema -->
 <div class="card bg-dark border-secondary p-4 mb-4">
     <h4 class="mb-3 fw-bold">🔍 Trazabilidad y Auditoría</h4>
+            <div class="col-md-3">
+            <button class="btn btn-success"
+                    onclick="exportarTablaExcel(
+                        'trazabilidad',
+                        'detalle-trazabilidad',
+                        'Detalle Trazabilidad y Auditoría'
+                    )">
+                Exportar Excel
+            </button>
+        </div>
+
     <p class="text-secondary small mb-3">Consulta el historial de cambios críticos, logins y modificaciones de datos.</p>
 
     <form method="GET" action="index.php" class="row g-2 mb-3">
@@ -23,10 +34,11 @@
         <div class="col-md-3">
             <button type="submit" class="btn btn-lex-primary w-100">🔍 Filtrar</button>
         </div>
+
     </form>
 
     <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-        <table class="table table-dark table-hover align-middle mb-0 text-nowrap">
+        <table class="table table-dark table-hover align-middle mb-0 text-nowrap" id="trazabilidad">
             <thead class="sticky-top bg-dark">
                 <tr>
                     <th class="text-secondary small">Fecha/Hora</th>

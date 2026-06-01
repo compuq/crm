@@ -19,7 +19,7 @@ public function listar(): void
     // ✅ 1. Obtener config de extras ANTES de renderizar la vista
     $configExtras = [];
     if (!empty($carteraId)) {
-        $stmt = $this->db->prepare("SELECT nombre_campo, etiqueta FROM extras_cartera WHERE id_cartera = :cid AND activo = true ORDER BY orden");
+        $stmt = $this->db->prepare("SELECT nombre_campo, etiqueta FROM extras_cartera WHERE id_cartera = :cid AND activo = true ORDER BY id desc");
         $stmt->execute(['cid' => $carteraId]);
         $configExtras = $stmt->fetchAll();
     }

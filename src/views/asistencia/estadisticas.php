@@ -24,15 +24,15 @@ $user = $this->session->getUser();
                 📋 Reportes
             </a>
 
-            <a href="?action=exportar_asistencia_excel
-                &fecha_inicio=<?= urlencode($fechaInicio) ?>
-                &fecha_fin=<?= urlencode($fechaFin) ?>
-                &usuario_id=<?= urlencode($usuarioId) ?>
-                &supervisor_id=<?= urlencode($supervisorId) ?>"
-               class="btn btn-success">
+            <button class="btn btn-success"
+                    onclick="exportarTablaExcel(
+                        'resumen-productividad-asistencia',
+                        'detalle_productividad_asistencia',
+                        'Detalle Productividad por Asistencia'
+                    )">
+                Exportar Excel
+            </button>
 
-                📥 Exportar Excel
-            </a>
 
         </div>
     </div>
@@ -317,7 +317,7 @@ $user = $this->session->getUser();
 
             <div class="table-responsive">
 
-                <table class="table table-dark table-hover align-middle mb-0">
+                <table class="table table-dark table-hover align-middle mb-0" id="resumen-productividad-asistencia">
 
                     <thead>
 

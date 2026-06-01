@@ -12,7 +12,14 @@ $user = $this->session->getUser();
                 Consulta de movimientos y asistencia del personal.
             </div>
         </div>
-
+        <button class="btn btn-success"
+                onclick="exportarTablaExcel(
+                    'asistencia-reporte',
+                    'detalle_asistencia',
+                    'Detalle de Asistencia'
+                )">
+            Exportar Excel
+        </button>
         <a href="?action=asistencia" class="btn btn-outline-light">
             ← Regresar
         </a>
@@ -97,7 +104,7 @@ $user = $this->session->getUser();
         <div class="card-body p-0">
 
             <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
+                <table class="table table-dark table-hover align-middle mb-0" id="asistencia-reporte">
 
                     <thead>
                         <tr>
