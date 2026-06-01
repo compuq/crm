@@ -101,7 +101,9 @@ class Router
         'migrar_clientes'    => 'BackupController@index',
         'migrar_historico'   => 'BackupController@migrar',  // ← AGREGAR ESTA LÍNEA
 
-        'trasladar_clientes' => 'BackupController@trasladarClientes',    ];
+        'trasladar_clientes' => 'BackupController@trasladarClientes', 
+        'borrado_gestiones'  => 'GestionController@borradoGestiones',
+        'borrar_gestiones'  => 'GestionController@borrarGestiones'   ];
     public function dispatch(): void
     {
         $action = $_GET['action'] ?? 'login';

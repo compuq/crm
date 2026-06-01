@@ -308,7 +308,6 @@ const DASHBOARD_DATA = {
     min-height: 35px;
     display: flex;
     align-items: center;
-    background: linear-gradient(145deg, #10151f, #111827);
     transition: all .2s ease;
     border-left: 4px solid transparent;
 }

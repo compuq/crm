@@ -112,7 +112,13 @@
                     <td><?= date('d/m/Y H:i:s', strtotime($p['fecha_compromiso'])) ?></td>
                     <td><span class="badge <?= $badge ?>"><?= strtoupper($p['estatus']) ?></span></td>
                     <td><?= htmlspecialchars($p['nombre']) ?></td>
-                    <td class="fw-medium"><?= htmlspecialchars($p['cuenta']) ?></td>
+                    <td class="fw-medium text-nowrap">
+                        <a href="?action=clientes&q=<?= htmlspecialchars($p['cuenta']) ?>"
+                        class="link-info text-decoration-none">
+                            <?= htmlspecialchars($p['cuenta']) ?>
+                        </a>
+                    </td>
+
                     <td class="text-warning">Q<?= number_format($p['monto_prometido'],2) ?></td>
                     <td><?= htmlspecialchars($p['gestor'] ?? '-') ?></td>
                     <td class="text-center <?= $alertClass ?>"><?= $llamadas ?></td>

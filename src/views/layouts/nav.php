@@ -89,6 +89,8 @@
                     </ul>
                 </li>
                 <li class="nav-item"><a class="nav-link" href="?action=validar_pagos">💳 Validar Pagos</a></li>
+                
+                <li class="nav-item"><a class="nav-link" href="?action=borrado_gestiones">✂️ Borrar Gestiones</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=migrar_clientes">♻️ Trasladar</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=backup">💾 Backup</a></li>
                 <?php if ($rol=='admin'):?>
@@ -154,42 +156,3 @@
     </div>
 </div>
 
-<!-- SCRIPTS DEL NAVBAR -->
-<script>
-// 1. Toggle Tema Oscuro/Claro
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-    const html = document.documentElement;
-    const current = html.getAttribute('data-bs-theme');
-    const newTheme = current === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-bs-theme', newTheme);
-    localStorage.setItem('theme', newTheme); // Guardar preferencia
-});
-
-// 2. Lógica del Modal de Cambiar Clave
-document.getElementById('formCambiarClave')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const btn = this.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.disabled = true; 
-    btn.innerHTML = '⏳ Guardando...';
-
-    fetch('?action=cambiar_clave', { method: 'POST', body: new FormData(this) })
-        .then(r => r.json())
-        .then(res => {
-            btn.disabled = false; 
-            btn.innerHTML = originalText;
-            if (res.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalCambiarClave')).hide();
-                alert('✅ ' + res.msg);
-                this.reset(); // Limpiar formulario
-            } else {
-                alert('❌ ' + res.msg);
-            }
-        })
-        .catch(() => {
-            btn.disabled = false; 
-            btn.innerHTML = originalText;
-            alert('❌ Error de conexión');
-        });
-});
-</script>

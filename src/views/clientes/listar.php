@@ -19,7 +19,7 @@ foreach ($clientes as $cliente) {
         $asignados[] = $cliente;
         continue;
     }
-
+    
     $timestamp = strtotime($fecha);
 
     // ===== HOY =====
@@ -256,7 +256,7 @@ function renderTablaClientes($clientes, $configExtras = [])
     <div class="d-flex justify-content-between align-items-center mb-3">
 
         <h4 class="mb-0 fw-bold">👥 Gestión de Clientes</h4>
-<a href="index.php?action=exportar_clientes&q=<?= urlencode($_GET['q'] ?? '') ?>"
+<a href="?action=exportar_clientes&q=<?= urlencode($_GET['q'] ?? '') ?>"
    class="btn btn-success">
     📊 Exportar Excel
 </a>
@@ -354,7 +354,7 @@ function renderTablaClientes($clientes, $configExtras = [])
         <li class="nav-item">
             <button class="nav-link"
                     data-bs-toggle="tab"
-                    data-bs-target="#tab-comp"
+                    data-bs-target="#tab-inc"
                     type="button">
 
                 🚫 Incumplimiento
@@ -401,6 +401,9 @@ function renderTablaClientes($clientes, $configExtras = [])
 
         <div class="tab-pane fade" id="tab-comp">
             <?php renderTablaClientes($comp ?? [], $configExtras); ?>
+        </div>
+        <div class="tab-pane fade" id="tab-inc">
+            <?php renderTablaClientes($incumplidas ?? [], $configExtras); ?>
         </div>
 
         <div class="tab-pane fade" id="tab-pagg">

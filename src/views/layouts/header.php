@@ -46,6 +46,79 @@
         border-color: #2a2f3d; 
         color: #e4e6eb;
     }
+/* ===== MODO CLARO FORZADO ===== */
+
+[data-bs-theme="light"] .bg-dark {
+    background-color: #fff !important;
+}
+
+[data-bs-theme="light"] .text-white,
+[data-bs-theme="light"] .text-light {
+    color: #212529 !important;
+}
+
+[data-bs-theme="light"] .card.bg-dark,
+[data-bs-theme="light"] .modal-content.bg-dark {
+    background-color: #fff !important;
+    color: #212529 !important;
+}
+
+[data-bs-theme="light"] .form-control.bg-dark,
+[data-bs-theme="light"] .form-select.bg-dark {
+    background-color: #fff !important;
+    color: #212529 !important;
+    border-color: #ced4da !important;
+}
+
+[data-bs-theme="light"] .table-dark {
+    --bs-table-bg: #fff !important;
+    --bs-table-color: #212529 !important;
+    --bs-table-border-color: #dee2e6 !important;
+}
+
+[data-bs-theme="light"] .table-dark th,
+[data-bs-theme="light"] .table-dark td {
+    color: #212529 !important;
+}   
+[data-bs-theme="dark"] .stat-title.text-success {
+    color: #75b798 !important;
+}
+
+[data-bs-theme="light"] .stat-title.text-success {
+    color: #198754 !important;
+} 
+
+[data-bs-theme="light"] .table-dark {
+    --bs-table-bg: #fff;
+    --bs-table-striped-bg: #f8f9fa;
+    --bs-table-striped-color: #212529;
+    --bs-table-color: #212529;
+}
+
+[data-bs-theme="dark"] .mini-card {
+    background: linear-gradient(145deg, #10151f, #111827);
+}
+
+[data-bs-theme="light"] .mini-card {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid #dee2e6;
+}
+
+body {
+    transition: background-color 1s ease,
+                color 1s ease;
+}
+
+.card,
+.modal-content,
+.table,
+.form-control,
+.form-select {
+    transition: background-color 1s ease,
+                color 1s ease,
+                border-color 2s ease;
+}    
+
 </style>
 <?= $extraStyles ?? '' ?>
 </head>

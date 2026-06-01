@@ -26,8 +26,8 @@ public function listar(): void
     
     // 2. Obtener clientes
     $clientes = $this->clienteDao->findByRole($user['id'], $user['role'], $search);
-    $pagg = $this->clienteDao->findNoConfirm($user['id'], $user['role'], '');
-    $incumplidas = $this->clienteDao->findNoDone($user['id'], $user['role'], '');
+    $pagg = $this->clienteDao->findNoConfirm($user['id'], $user['role'], $search);
+    $incumplidas = $this->clienteDao->findNoDone($user['id'], $user['role'], $search);
 
     // 3. Variables para el layout
     $pageTitle = "Gestión de Clientes | LEX 360";

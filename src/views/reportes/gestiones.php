@@ -103,7 +103,12 @@
                         <td class="small text-secondary"><?= htmlspecialchars($g['supervisor_nombre'] ?? '-') ?></td>
                         <td><?= htmlspecialchars($g['gestor_nombre']) ?></td>
                         <td><?= htmlspecialchars($g['cliente_nombre']) ?></td>
-                        <td class="fw-medium"><?= htmlspecialchars($g['cuenta']) ?></td>
+                        <td class="fw-medium text-nowrap">
+                            <a href="?action=clientes&q=<?= htmlspecialchars($g['cuenta']) ?>"
+                            class="link-info text-decoration-none">
+                                <?= htmlspecialchars($g['cuenta']) ?>
+                            </a>
+                        </td>
                         <td><?= htmlspecialchars($g['tipologia_nombre'] ?? '-') ?></td>
                         <td><span class="badge <?= $badge ?>"><?= $g['estatus'] ?></span></td>
                         <td class="text-center text-warning fw-bold">

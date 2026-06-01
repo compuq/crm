@@ -120,7 +120,13 @@
                     <tr>
                         <td class="small"><?= date('d/m/Y H:i', strtotime($p['fecha_gestion'])) ?></td>
                         <td><?= htmlspecialchars($p['nombre']) ?></td>
-                        <td class="fw-medium"><?= htmlspecialchars($p['cuenta']) ?></td>
+                        <td class="fw-medium text-nowrap">
+                            <a href="?action=clientes&q=<?= htmlspecialchars($p['cuenta']) ?>"
+                            class="link-info text-decoration-none">
+                                <?= htmlspecialchars($p['cuenta']) ?>
+                            </a>
+                        </td>
+
                         <td><?= htmlspecialchars($p['gestor']) ?></td>
                         <td><span class="badge <?= $badge ?>"><?= $p['estatus'] ?></span></td>
                         <td class="text-end text-warning fw-bold">Q<?= number_format($p['monto'], 2) ?></td>

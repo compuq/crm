@@ -2,7 +2,7 @@
 namespace LEX360\Controllers;
 
 use Exception;
-
+use PDO;
 class GestionController extends \LEX360\Core\Controller
 {
     public function getTipologiasConfig(): void
@@ -557,4 +557,193 @@ public function registrarGestion(): void
         exit;
     }        
 
+    public function listarUsuarios(): array
+    {
+        $sql = "
+            SELECT
+                id,
+                usuario,
+                nombre
+            FROM usuarios
+            WHERE activo = TRUE
+            ORDER BY nombre
+        ";
+
+        $stmt = $this->db->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function borrarGestiones(): void
+    {
+        $ids = $_POST['ids'] ?? [];
+
+        if (empty($ids)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No se recibieron gestiones'
+            ]);
+            return;
+        }
+
+        $ids = array_map('intval', $ids);
+
+        try {
+
+            $this->db->beginTransaction();
+
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+            // Eliminar promesas
+            $stmt = $this->db->prepare("
+                DELETE FROM promesas
+                WHERE id_historial IN ($placeholders)
+            ");
+            $stmt->execute($ids);
+
+            // Eliminar pagos
+            $stmt = $this->db->prepare("
+                DELETE FROM pagos
+                WHERE id_historial IN ($placeholders)
+            ");
+            $stmt->execute($ids);
+
+            // Eliminar historial
+            $stmt = $this->db->prepare("
+                DELETE FROM historial
+                WHERE id IN ($placeholders)
+            ");
+            $stmt->execute($ids);
+
+            $this->db->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => count($ids) . ' gestiones eliminadas'
+            ]);
+
+        } catch (Exception $e) {
+
+            $this->db->rollBack();
+
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    public function listarGestiones(): array
+    {
+        $where = [];
+        $params = [];
+
+        // Filtro usuario
+        if (!empty($_GET['idUsuario'])) {
+            $where[] = 'h.id_usuario = :idUsuario';
+            $params['idUsuario'] = (int)$_GET['idUsuario'];
+        }
+
+        // Fechas recibidas desde datetime-local
+        $fechaInicio = !empty($_GET['fechaInicio'])
+            ? str_replace('T', ' ', $_GET['fechaInicio'])
+            : null;
+
+        $fechaFin = !empty($_GET['fechaFin'])
+            ? str_replace('T', ' ', $_GET['fechaFin'])
+            : null;
+
+        // Si no envían fechas, mostrar únicamente hoy
+        if (empty($fechaInicio) && empty($fechaFin)) {
+            $fechaInicio = date('Y-m-d 00:00:00');
+            $fechaFin    = date('Y-m-d 23:59:59');
+        }
+
+        // Aplicar filtros de fecha
+        if (!empty($fechaInicio) && !empty($fechaFin)) {
+
+            $where[] = 'h.fecha_gestion BETWEEN :fechaInicio AND :fechaFin';
+
+            $params['fechaInicio'] = $fechaInicio;
+            $params['fechaFin'] = $fechaFin;
+
+        } else {
+
+            if (!empty($fechaInicio)) {
+                $where[] = 'h.fecha_gestion >= :fechaInicio';
+                $params['fechaInicio'] = $fechaInicio;
+            }
+
+            if (!empty($fechaFin)) {
+                $where[] = 'h.fecha_gestion <= :fechaFin';
+                $params['fechaFin'] = $fechaFin;
+            }
+        }
+
+        $sqlWhere = '';
+
+        if (!empty($where)) {
+            $sqlWhere = 'WHERE ' . implode(' AND ', $where);
+        }
+
+        $sql = "
+            SELECT
+                h.id,
+                h.id_cliente,
+                h.id_usuario,
+                u.usuario,
+                u.nombre AS nombre_usuario,
+                h.fecha_gestion,
+                h.estatus,
+                h.telefono_utilizado,
+                h.id_tipologia,
+                t.nombre AS tipologia,
+                h.comentario,
+                h.fecha_proxima_llamada,
+
+                (
+                    SELECT COUNT(*)
+                    FROM promesas p
+                    WHERE p.id_historial = h.id
+                ) AS total_promesas,
+
+                (
+                    SELECT COUNT(*)
+                    FROM pagos pg
+                    WHERE pg.id_historial = h.id
+                ) AS total_pagos
+
+            FROM historial h
+
+            LEFT JOIN usuarios u
+                ON u.id = h.id_usuario
+
+            LEFT JOIN tipologias t
+                ON t.id = h.id_tipologia
+
+            $sqlWhere
+
+            ORDER BY h.fecha_gestion DESC
+            LIMIT 1000
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function borradoGestiones(): void
+    {
+        if(!in_array($_SESSION["role"]??"",['admin'])){
+            die("Operación no autorizada para su perfil");
+        }
+        $gestiones = $this->listarGestiones();
+        $usuarios  = $this->listarUsuarios();
+
+        ob_start();
+        require_once __DIR__ . '/../views/borrado/index.php';
+        $viewContent = ob_get_clean();
+        
+        // 5. Renderizar layout maestro
+        require_once __DIR__ . '/../views/frontend.php';
+
+    }
 }

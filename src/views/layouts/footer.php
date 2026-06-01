@@ -72,6 +72,41 @@ function exportarTablaExcel(idTabla, prefijo, titulo = '') {
     URL.revokeObjectURL(enlace.href);
 }
 </script>
+<!-- SCRIPTS DEL NAVBAR -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const html = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+
+    // Recuperar tema guardado
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+
+    html.setAttribute('data-bs-theme', savedTheme);
+    actualizarIcono(savedTheme);
+
+    btn.addEventListener('click', function() {
+
+        const currentTheme = html.getAttribute('data-bs-theme');
+
+        const newTheme = currentTheme === 'dark'
+            ? 'light'
+            : 'dark';
+
+        html.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        actualizarIcono(newTheme);
+    });
+
+    function actualizarIcono(theme) {
+        btn.innerHTML = theme === 'dark'
+            ? '☀️'
+            : '🌙';
+    }
+
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <?= $extraScripts ?? '' ?>
 </body>
