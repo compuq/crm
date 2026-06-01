@@ -357,11 +357,11 @@ class ReporteController extends Controller
                 'Reporte_Gestiones_' . date('Y-m-d'),
                 [
                     'fecha_gestion' => [
-                        'formato' => 'date',
+                        'formato' => 'datetime',
                         'ancho' => 18
                     ],
                     'fecha_proxima_llamada' => [
-                        'formato' => 'date',
+                        'formato' => 'datetime',
                         'ancho' => 18
                     ]
                 ]
@@ -464,7 +464,7 @@ class ReporteController extends Controller
         // =========================
         $sql = "
             SELECT h.id, h.fecha_gestion, h.estatus, COALESCE(p.monto, 0) AS monto, h.comentario,
-                   c.nombre AS nombre, c.cuenta, c.identificacion, u.nombre AS gestor
+                   c.nombre AS nombre, c.cuenta, c.identificacion, u.nombre AS gestor, p.referencia_bancaria
             FROM historial h
             JOIN clientes c ON c.id = h.id_cliente
             JOIN usuarios u ON u.id = h.id_usuario
@@ -680,7 +680,11 @@ class ReporteController extends Controller
                     c.nombre AS cliente,
                     c.cuenta,
                     c.identificacion,
-                    u.nombre AS gestor
+                    u.nombre AS gestor,
+                    CASE
+                        WHEN nullif(trim(p.referencia_bancaria),'') IS NOT NULL THEN p.referencia_bancaria
+                        WHEN nullif(trim(p.referencia_bancaria),'') IS NULL     THEN 'SIN COMENTARIO'
+                    END as comentario_validacion
                 FROM historial h
                 JOIN clientes c ON c.id = h.id_cliente
                 JOIN usuarios u ON u.id = h.id_usuario
@@ -699,7 +703,7 @@ class ReporteController extends Controller
                 $datos,
                 'Reporte_Pagos_' . date('Y-m-d'),
                 [
-                    'fecha_gestion' => ['formato' => 'date', 'ancho' => 18],
+                    'fecha_gestion' => ['formato' => 'datetime', 'ancho' => 18],
                     'monto' => ['formato' => 'currency', 'ancho' => 15]
                 ]
             );
@@ -847,11 +851,11 @@ class ReporteController extends Controller
                 'Reporte_Promesas_' . date('Y-m-d'),
                 [
                     'fecha_registro' => [
-                        'formato' => 'date',
+                        'formato' => 'datetime',
                         'ancho' => 18
                     ],
                     'fecha_compromiso' => [
-                        'formato' => 'date',
+                        'formato' => 'datetime',
                         'ancho' => 18
                     ],
                     'monto_prometido' => [

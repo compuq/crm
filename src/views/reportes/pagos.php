@@ -99,6 +99,7 @@
                     <th>Estado</th>
                     <th class="text-end">💰 Monto</th>
                     <th>Comentario</th>
+                    <th>Comentario Validación</th>
                 </tr>
             </thead>
             <tbody>
@@ -126,6 +127,7 @@
                         <td class="small text-secondary" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($p['comentario']) ?>">
                             <?= htmlspecialchars($p['comentario']) ?>
                         </td>
+                        <td><?php if ($p['referencia_bancaria'])echo htmlspecialchars($p['referencia_bancaria']); else echo "SIN COMENTARIO"; ?></td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

@@ -71,7 +71,7 @@ class CargaController extends Controller
             'usuario_gestor' => 'juan.perez'
         ];
 
-        $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'date']]);
+        $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'datetime']]);
     }
 
 public function importarGestiones(): void
@@ -366,6 +366,6 @@ public function descargarPlantilla(): void
             'usuario_gestor' => 'juan.perez'
         ];
 
-        $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'date']]);
+        $excel->exportarXlsx([$ejemplo], 'Plantilla_Gestiones', ['fecha_gestion' => ['formato' => 'datetime']]);
     }
 }

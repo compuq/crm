@@ -1,6 +1,7 @@
 <!-- views/pagos/validar.php -->
 <div class="card bg-dark border-secondary p-4 mb-4">
     <h4 class="mb-3 fw-bold">✅ Validación de Pagos</h4>
+
     <p class="text-secondary small">
         Valide los pagos reportados por los gestores (PAGG) ingresando la referencia bancaria.
     </p>
@@ -45,20 +46,39 @@
             <label class="form-label small text-secondary">Hasta</label>
             <input type="date" name="fecha_fin" class="form-control bg-dark text-white border-secondary" value="<?= htmlspecialchars($filtroFechaFin) ?>">
         </div>
+        <div class="col-md-2">
+
+            <label class="form-label small text-secondary">Buscar</label>
+            <input type="text" name="buscar" class="form-control bg-dark text-white border-secondary" value="<?= htmlspecialchars($buscar) ?>">
+        </div>
+        
         <div class="col-md-2 d-flex align-items-end gap-2">
+
             <button type="submit" class="btn btn-lex-primary flex-grow-1">🔍 Filtrar</button>
+            
             <a href="?action=validar_pagos" class="btn btn-outline-secondary" title="Limpiar filtros">🔄</a>
         </div>
     </form>
+    
 </div>
 
 <!-- ✅ Tabla de Pendientes -->
 <div class="card bg-dark border-secondary p-4">
-    <h5 class="mb-3 fw-bold">📋 Pagos Pendientes de Validar</h5>
+    <h5 class="mb-3 fw-bold">
+        <button class="btn btn-success"
+                onclick="exportarTablaExcel(
+                    'validacion-pagos',
+                    'validacion_pagos_pendientes_validar',
+                    'Detalle de pagos pendientes de validar'
+                    )">
+                Exportar Excel
+            </button>
+        📋 Pagos Pendientes de Validar                
+</h5>
     
     <?php if (!empty($pendientes)): ?>
     <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
+        <table class="table table-dark table-hover align-middle mb-0" id ="validacion-pagos">
             <thead>
                 <tr>
                     <th class="text-secondary text-uppercase small">Cliente</th>
@@ -68,6 +88,7 @@
                     <th class="text-secondary text-uppercase small">Supervisor</th>
                     <th class="text-secondary text-uppercase small">Fecha</th>
                     <th class="text-secondary text-uppercase small">Monto</th>
+                    <th class="text-secondary text-uppercase small">Comentario</th>
                     <th class="text-center text-secondary text-uppercase small">Acción</th>
                 </tr>
             </thead>
@@ -81,6 +102,7 @@
                     <td><?= htmlspecialchars($p['supervisor'] ?? '-') ?></td>
                     <td><?= date('d/m/Y H:i', strtotime($p['fecha_gestion'])) ?></td>
                     <td class="text-success fw-bold">Q<?= number_format($p['monto'], 2) ?></td>
+                    <td><?= htmlspecialchars($p['comentario']) ?></td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-success" 
                                 onclick="abrirModalValidar(<?= $p['pago_id'] ?>, '<?= addslashes($p['nombre']) ?>', <?= $p['monto'] ?>)">

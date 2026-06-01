@@ -8,7 +8,6 @@ class PagoController extends Controller
     public function validar(): void
     {
         $this->session->requireAuth();
-        
         // Solo admin y supervisor_general pueden validar
         $user = $this->session->getUser();
         if (!in_array($user['role'], ['admin', 'supervisor_general'])) {
@@ -21,7 +20,7 @@ class PagoController extends Controller
         $filtroSupervisor = $_GET['supervisor_id'] ?? '';
         $filtroFechaInicio = $_GET['fecha_inicio'] ?? '';
         $filtroFechaFin = $_GET['fecha_fin'] ?? '';
-
+        $buscar = $_GET['buscar'] ?? '';
         // ✅ Obtener lista de gestores y supervisores para los filtros
         $gestores = $this->db->prepare("SELECT id, nombre FROM usuarios WHERE rol = 'gestor' AND activo = true ORDER BY nombre");
         $gestores->execute();
@@ -44,15 +43,25 @@ class PagoController extends Controller
                 sup.nombre as supervisor,
                 h.fecha_gestion, 
                 h.comentario,
-                p.monto
+                p.monto,
+                h.comentario
             FROM pagos p
             JOIN historial h ON h.id = p.id_historial
             JOIN clientes c ON h.id_cliente = c.id 
             JOIN usuarios u ON h.id_usuario = u.id 
             LEFT JOIN usuarios sup ON c.id_supervisor_cadena = sup.id
             WHERE p.estatus = 'PAGG'
-        ";
-        $params = [];
+            ";
+        if (!empty($buscar)){
+            $sql.="
+            AND
+            (c.search_vector @@ websearch_to_tsquery('spanish', :buscar)
+            OR h.comentario ILIKE '%' || :buscar || '%')";
+            $params = ['buscar'=>$buscar];
+        } else{
+            $params = [];
+        }
+        
 
         if (!empty($filtroGestor)) {
             $sql .= " AND u.id = :gestor_id";
@@ -81,7 +90,7 @@ class PagoController extends Controller
         $mensaje = $_SESSION['flash_message'] ?? '';
         $tipoMensaje = $_SESSION['flash_type'] ?? '';
         unset($_SESSION['flash_message'], $_SESSION['flash_type']);
-
+        
         // ✅ Renderizar con layout maestro
         ob_start();
         require_once __DIR__ . '/../views/pagos/validar.php';
