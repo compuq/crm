@@ -1,11 +1,11 @@
 <?php
 // Configuración de la Base de Datos Externa
 return [
-    'host'     => '127.0.0.1', // IP del servidor externo
+    'host'     => '195.26.255.73', // IP del servidor externo
     'port'     => '5432',      // Puerto
-    'dbname'   => 'db_externa',// Nombre de la BD externa
-    'user'     => 'usuario_externo',
-    'password' => 'clave_externa',
+    'dbname'   => 'main_db',// Nombre de la BD externa
+    'user'     => 'externo',
+    'password' => '@CC3S0360',
     'charset'  => 'utf8',
     'options'  => [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,

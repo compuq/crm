@@ -65,7 +65,12 @@
                 <li class="nav-item"><a class="nav-link" href="?action=asistencia">🕒 Asistencia</a></li>
 
                 
+            <?php if (in_array($user['role'], ['gestor'])): ?>
 
+                <li class="nav-item"><a class="nav-link" href="?action=clientes">📞 Operación Global</a></li>
+            <?php endif; ?>
+
+            <!--<li class="nav-item"><a class="nav-link" href="?action=mis_promesas">🤝 Mis Promesas</a></li>-->
             <?php elseif ($user['role'] === 'supervisor'): ?>
                 <li class="nav-item"><a class="nav-link" href="?action=clientes">👥 Equipo</a></li>
                 <li class="nav-item dropdown">
@@ -75,12 +80,11 @@
                         <li><a class="dropdown-item" href="?action=carga_gestiones">Cargar Gestiones</a></li>
                     </ul>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="?action=usuarios">👤 Usuarios</a></li>
+                
 
             <?php elseif (in_array($user['role'], ['supervisor_general', 'admin'])): ?>
-                <li class="nav-item"><a class="nav-link" href="?action=clientes">📞 Operación Global</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=auditoria">📄 Auditoría</a></li>
-                <li class="nav-item"><a class="nav-link" href="?action=mis_promesas">🤝 Mis Promesas</a></li>
+                
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">📥 Cargas</a>
                     <ul class="dropdown-menu dropdown-menu-dark">
@@ -88,11 +92,41 @@
                         <li><a class="dropdown-item" href="?action=carga_gestiones">Cargar Gestiones</a></li>
                     </ul>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="?action=validar_pagos">💳 Validar Pagos</a></li>
-                
-                <li class="nav-item"><a class="nav-link" href="?action=borrado_gestiones">✂️ Borrar Gestiones</a></li>
-                <li class="nav-item"><a class="nav-link" href="?action=migrar_clientes">♻️ Trasladar</a></li>
-                <li class="nav-item"><a class="nav-link" href="?action=backup">💾 Backup</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">☑️ Acciones</a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+
+                        <li>
+                            <a class="dropdown-item" href="?action=validar_pagos">
+                                💳 Validar Pagos
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="?action=borrado_gestiones">
+                                ✂️ Borrar Gestiones
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="?action=modificar_clientes">
+                                🔁 Modificar Clientes
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?action=migrar_clientes">
+                                ♻️ Trasladar Clientes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="?action=backup">
+                                💾 Backup
+                            </a>
+                        </li>
+                    
+                    </ul>
+                </li>
                 <?php if ($rol=='admin'):?>
                 <li class="nav-item"><a class="nav-link" href="?action=configuracion">️⚙️ Configuración</a></li>
                 <?php endif;?>

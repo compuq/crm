@@ -347,4 +347,313 @@ private function llenarHoja($sheet, array $clientes): void
         $sheet->getColumnDimension($column)->setAutoSize(true);
     }
 }
+public function modificar()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        
+        $usuarios = $this->db->query("
+            SELECT
+                id,
+                nombre,
+                rol,
+                supervisor_id
+            FROM usuarios
+            WHERE activo = true
+            ORDER BY nombre
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        ob_start();
+        require __DIR__ . '/../views/clientes/modificar.php';
+        $viewContent = ob_get_clean();
+        
+        // ✅ ESTO ES CRÍTICO: Incluir frontend.php
+        require_once __DIR__ . '/../views/frontend.php';
+        exit;
+
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    $accion = $_POST['accion'] ?? '';
+
+    try {
+
+        switch ($accion) {
+
+            case 'buscar':
+
+                $nombre = trim($_POST['nombre'] ?? '');
+                $datos  = trim($_POST['datos'] ?? '');
+
+                if ($nombre === '' && $datos === '') {
+                    echo json_encode([
+                        'ok' => false,
+                        'mensaje' => 'Debe indicar un criterio de búsqueda'
+                    ]);
+                    exit;
+                }
+
+                if ($nombre !== '') {
+
+                    $sql = "
+                        SELECT
+                            id,
+                            cuenta,
+                            identificacion,
+                            nombre,
+                            saldo,
+                            telefono_1,
+                            id_gestor_asignado
+                        FROM clientes
+                        WHERE to_tsvector(
+                            'spanish',
+                            lower(coalesce(nombre,''))
+                        ) @@ plainto_tsquery(
+                            'spanish',
+                            lower(:nombre)
+                        )
+                        ORDER BY nombre
+                        LIMIT 20
+                    ";
+
+                    $stmt = $this->db->prepare($sql);
+                    $stmt->execute([
+                        ':nombre' => $nombre
+                    ]);
+
+                } else {
+
+                    $sql = "
+                        SELECT
+                            id,
+                            cuenta,
+                            identificacion,
+                            nombre,
+                            saldo,
+                            telefono_1,
+                            id_gestor_asignado
+                        FROM clientes
+                        WHERE search_vector
+                        @@ websearch_to_tsquery(
+                            'spanish',
+                            :datos
+                        )
+                        ORDER BY nombre
+                        LIMIT 20
+                    ";
+
+                    $stmt = $this->db->prepare($sql);
+                    $stmt->execute([
+                        ':datos' => $datos
+                    ]);
+                }
+
+                echo json_encode([
+                    'ok' => true,
+                    'clientes' => $stmt->fetchAll(PDO::FETCH_ASSOC)
+                ]);
+                exit;
+
+            case 'cargar':
+
+                $id = (int)($_POST['id'] ?? 0);
+
+                $stmt = $this->db->prepare("
+                    SELECT *
+                    FROM clientes
+                    WHERE id = :id
+                ");
+
+                $stmt->execute([
+                    ':id' => $id
+                ]);
+
+                $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$cliente) {
+
+                    echo json_encode([
+                        'ok' => false,
+                        'mensaje' => 'Cliente no encontrado'
+                    ]);
+
+                    exit;
+                }
+
+                $stmt = $this->db->prepare("
+                    SELECT
+                        nombre_campo,
+                        etiqueta
+                    FROM extras_cartera
+                    WHERE id_cartera = :id_cartera
+                    ORDER BY id
+                ");
+
+                $stmt->execute([
+                    ':id_cartera' => $cliente['id_cartera']
+                ]);
+
+                $camposExtras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    'ok' => true,
+                    'cliente' => $cliente,
+                    'campos_extras' => $camposExtras
+                ]);
+
+                exit;
+            case 'guardar':
+                $dataExtras = $_POST['data_extras'] ?? '{}';
+
+                json_decode($dataExtras, true);
+
+                if (json_last_error() !== JSON_ERROR_NONE) {
+
+                    echo json_encode([
+                        'ok' => false,
+                        'mensaje' => 'JSON de data_extras inválido'
+                    ]);
+
+                    exit;
+                }
+                $stmt = $this->db->prepare("
+                    UPDATE clientes
+                    SET
+                        nombre = :nombre,
+                        saldo = :saldo,
+                        saldo_inicial = :saldo_inicial,
+                        telefono_1 = :telefono_1,
+                        telefono_2 = :telefono_2,
+                        estado = :estado,
+                        data_extras = CAST(:data_extras AS jsonb),
+                        id_supervisor_cadena = :id_supervisor_cadena,
+                        id_gestor_asignado = :id_gestor_asignado,
+                        fecha_actualizacion = now()
+                    WHERE id = :id                ");
+
+                $stmt->execute([
+                    ':id' => $_POST['id'],
+                    ':nombre' => $_POST['nombre'],
+                    ':saldo' => $_POST['saldo'],
+                    ':saldo_inicial' => $_POST['saldo_inicial'],
+                    ':telefono_1' => $_POST['telefono_1'],
+                    ':telefono_2' => $_POST['telefono_2'],
+                    ':estado' => $_POST['estado'],
+                    ':id_supervisor_cadena' => $_POST['id_supervisor_cadena'],
+                    ':id_gestor_asignado' => $_POST['id_gestor_asignado'],
+                    ':data_extras' => $_POST['data_extras'],
+                ]);
+
+                echo json_encode([
+                    'ok' => true,
+                    'mensaje' => 'Cliente actualizado correctamente'
+                ]);
+                exit;
+        }
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => 'Acción inválida'
+        ]);
+
+    } catch (\Exception $e) {
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => $e->getMessage()
+        ]);
+    }
+
+    exit;
+}
+public function eliminarCliente()
+{
+    header('Content-Type: application/json; charset=utf-8');
+
+    $id = (int)($_POST['id'] ?? 0);
+
+    if (!$id) {
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => 'Cliente inválido'
+        ]);
+
+        exit;
+    }
+
+    try {
+
+        $this->db->beginTransaction();
+
+        $stmt = $this->db->prepare("
+            DELETE FROM historial
+            WHERE id_cliente = :id
+        ");
+
+        $stmt->execute([
+            ':id' => $id
+        ]);
+
+        $historial = $stmt->rowCount();
+
+        $stmt = $this->db->prepare("
+            DELETE FROM promesas
+            WHERE id_cliente = :id
+        ");
+
+        $stmt->execute([
+            ':id' => $id
+        ]);
+
+        $promesas = $stmt->rowCount();
+
+        $stmt = $this->db->prepare("
+            DELETE FROM pagos
+            WHERE id_cliente = :id
+        ");
+
+        $stmt->execute([
+            ':id' => $id
+        ]);
+
+        $pagos = $stmt->rowCount();
+
+        $stmt = $this->db->prepare("
+            DELETE FROM clientes
+            WHERE id = :id
+        ");
+
+        $stmt->execute([
+            ':id' => $id
+        ]);
+
+        if ($stmt->rowCount() !== 1) {
+            throw new Exception('No se pudo eliminar el cliente');
+        }
+
+        $this->db->commit();
+
+        echo json_encode([
+            'ok' => true,
+            'mensaje' =>
+                "Cliente eliminado correctamente\n" .
+                "Historial: {$historial}\n" .
+                "Promesas: {$promesas}\n" .
+                "Pagos: {$pagos}"
+        ]);
+
+    } catch (\Exception $e) {
+
+        if ($this->db->inTransaction()) {
+            $this->db->rollBack();
+        }
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => $e->getMessage()
+        ]);
+    }
+
+    exit;
+}
 }

@@ -106,7 +106,7 @@
 
 body {
     transition: background-color 1s ease,
-                color 1s ease;
+                color 0.5s ease;
 }
 
 .card,
@@ -115,8 +115,8 @@ body {
 .form-control,
 .form-select {
     transition: background-color 1s ease,
-                color 1s ease,
-                border-color 2s ease;
+                color 0.5s ease,
+                border-color 0.2s ease;
 }    
 
 </style>

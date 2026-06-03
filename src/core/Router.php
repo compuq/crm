@@ -79,6 +79,8 @@ class Router
         'get_promesas_pendientes' => 'GestionController@getPromesasPendientes',
         'get_proximas_llamadas' => 'GestionController@getProximasLlamadas',
         'exportar_clientes' => 'ClienteController@exportarClientes',
+        'modificar_clientes' => 'ClienteController@modificar',
+        'eliminar_clientes' => 'ClienteController@eliminarCliente',
         //Reportes
         // Reportes
         'reportes_gestiones' => 'ReporteController@generarReporte',
@@ -103,7 +105,14 @@ class Router
 
         'trasladar_clientes' => 'BackupController@trasladarClientes', 
         'borrado_gestiones'  => 'GestionController@borradoGestiones',
-        'borrar_gestiones'  => 'GestionController@borrarGestiones'   ];
+        'borrar_gestiones'  => 'GestionController@borrarGestiones',
+        
+        //Consulta bases externas
+        'consultar_prueba' => 'ExternosController@consultarPrueba',
+        'consultar_externos' => 'ExternosController@consultarExternos',
+
+        ];
+
     public function dispatch(): void
     {
         $action = $_GET['action'] ?? 'login';

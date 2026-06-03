@@ -517,32 +517,106 @@ function renderTablaClientes($clientes, $configExtras = [])
 
                     <!-- COLUMNA DERECHA: CONSULTA EXTERNA -->
                     <div class="col-lg-5 p-4 bg-dark bg-opacity-50">
+
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="text-uppercase text-info small fw-bold mb-0">🔍 Consulta Externa</h6>
+                            <h6 class="text-uppercase text-info small fw-bold mb-0">
+                                🔍 Consulta Externa
+                            </h6>
                             <span class="badge bg-warning text-dark">Base Pendiente</span>
                         </div>
-                        <p class="text-secondary small mb-3">Busca información en bases externas.</p>
-                        <form id="formConsultaExterna" onsubmit="event.preventDefault(); buscarEnBaseExterna();">
-                            <div class="mb-3"><label class="form-label small text-secondary">DPI / CUI</label><input type="text" class="form-control bg-dark text-white border-secondary" id="extDpi"></div>
-                            <div class="mb-3"><label class="form-label small text-secondary">Nombre Completo</label><input type="text" class="form-control bg-dark text-white border-secondary" id="extNombre"></div>
-                            <button type="submit" class="btn btn-outline-info w-100 mb-2" id="btnBuscar" disabled>🔍 Buscar</button>
+
+                        <p class="text-secondary small mb-3">
+                            Busca información en bases externas.
+                        </p>
+
+                        <form id="formConsultaExterna">
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary">
+                                    DPI / CUI
+                                </label>
+                                <input type="text"
+                                    class="form-control bg-dark text-white border-secondary"
+                                    id="extDpi">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary">
+                                    Nombre Completo
+                                </label>
+                                <input type="text"
+                                    class="form-control bg-dark text-white border-secondary"
+                                    id="extNombre">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary">
+                                    Otros datos
+                                </label>
+                                <input type="text"
+                                    class="form-control bg-dark text-white border-secondary"
+                                    id="extDatos">
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-outline-info w-100 mb-2"
+                                    id="btnBuscar">
+                                🔍 Buscar
+                            </button>
+
                         </form>
-                        <div id="resultadoConsulta" class="consulta-printable" style="display:none;">
+
+                        <!-- ALERTAS -->
+                        <div id="alertaConsulta"></div>
+
+                        <!-- RESULTADO -->
+                        <div id="resultadoConsulta"
+                            class="consulta-printable"
+                            style="display:none;">
+
                             <div class="alert alert-dark border-secondary p-3 mb-2">
-                                <div class="d-flex justify-content-between align-items-center mb-2"><strong class="text-info">📋 Resultado</strong><small class="text-secondary" id="fechaConsulta"></small></div>
-                                <hr class="border-secondary my-2"><div id="contenidoConsulta" class="small"></div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong class="text-info">📋 Resultado</strong>
+                                    <small class="text-secondary" id="fechaConsulta"></small>
+                                </div>
+
+                                <hr class="border-secondary my-2">
+
+                                <div id="contenidoConsulta" class="small"></div>
+
                             </div>
+
                             <div class="btn-group w-100">
-                                <button type="button" class="btn btn-sm btn-success" onclick="imprimirConsulta()">🖨️ Imprimir</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cerrarConsulta()">✖ Cerrar</button>
+                                <button type="button"
+                                        class="btn btn-outline-success"
+                                        onclick="imprimirConsulta()">
+                                    🖨 Imprimir
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        onclick="cerrarConsulta()">
+                                    ✖ Cerrar
+                                </button>
+
                             </div>
+
                         </div>
+
+                        <!-- PLACEHOLDER -->
                         <div id="placeholderConsulta" class="text-center py-4">
-                            <i class="bi bi-database text-secondary" style="font-size: 3rem; opacity: 0.3;"></i>
-                            <p class="text-secondary small mt-2 mb-0">Sin datos consultados</p>
+
+                            <i class="bi bi-database text-secondary"
+                            style="font-size: 1rem; opacity: 0.3;">
+                            </i>
+
+                            <p class="text-secondary small mt-2 mb-0">
+                                Sin datos consultados
+                            </p>
+
                         </div>
-                    </div>
-                </div>
+
+                    </div>                </div>
             </div>
             <div class="modal-footer border-secondary bg-secondary bg-opacity-10">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -900,20 +974,6 @@ document.addEventListener('DOMContentLoaded', function () {
         modalGestion.show();
     };
 
-    window.guardarGestion = function () {
-        const form = document.getElementById('formGestion');
-        if (!form || !form.checkValidity()) { if (form) form.reportValidity(); return; }
-        const btn = document.querySelector('#modalGestion .btn-success');
-        if (!btn) return;
-        const original = btn.innerHTML;
-        btn.disabled = true; btn.innerHTML = '⏳ Guardando...';
-        fetch('?action=registrar_gestion', { method: 'POST', body: new FormData(form) })
-            .then(r => r.json()).then(res => {
-                btn.disabled = false; btn.innerHTML = original;
-                if (res.success) { modalGestion.hide(); location.reload(); }
-                else alert('❌ ' + (res.message || 'Error'));
-            }).catch(() => { btn.disabled = false; btn.innerHTML = original; alert('❌ Error guardando'); });
-    };
 
     // =========================================
     // ✅ PANEL DE ALERTAS (INSISTENTE: REAPARECE AL RECARGAR)
@@ -987,4 +1047,344 @@ document.addEventListener('DOMContentLoaded', function () {
     })();
 
 }); // ✅ FIN DEL DOMContentLoaded
+</script>
+<!-- Script para datos externos -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const btnBuscar = document.getElementById('btnBuscar');
+
+    if (btnBuscar) {
+        btnBuscar.addEventListener('click', buscarEnBaseExterna);
+    }
+
+});
+
+async function buscarEnBaseExterna() {
+
+    const dpi = document.getElementById('extDpi').value.trim();
+    const nombre = document.getElementById('extNombre').value.trim();
+    const datos = document.getElementById('extDatos').value.trim();
+
+    const alerta = document.getElementById('alertaConsulta');
+    const btn = document.getElementById('btnBuscar');
+
+    const resultado = document.getElementById('resultadoConsulta');
+    const contenido = document.getElementById('contenidoConsulta');
+    const placeholder = document.getElementById('placeholderConsulta');
+    const fechaConsulta = document.getElementById('fechaConsulta');
+
+    alerta.innerHTML = '';
+
+    if (dpi === '' && nombre === '' && datos === '') {
+
+        alerta.innerHTML = `
+            <div class="alert alert-warning mt-2">
+                ⚠️ Debes ingresar al menos un criterio de búsqueda.
+            </div>
+        `;
+
+        return;
+    }
+
+    try {
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Buscando...';
+
+        const formData = new FormData();
+        formData.append('dpi', dpi);
+        formData.append('nombre', nombre);
+        formData.append('datos', datos);
+
+        const response = await fetch('?action=consultar_externos', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        console.log('Consulta externa:', data);
+
+        let resultados = [];
+
+        if (Array.isArray(data)) {
+            resultados = data;
+        } else if (data.resultados && Array.isArray(data.resultados)) {
+            resultados = data.resultados;
+        }
+
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+
+        if (resultado) {
+            resultado.style.display = 'block';
+        }
+
+        if (fechaConsulta) {
+            fechaConsulta.textContent = new Date().toLocaleString('es-GT');
+        }
+
+        if (resultados.length === 0) {
+
+            alerta.innerHTML = `
+                <div class="alert alert-warning mt-2">
+                    ⚠️ No se encontraron resultados.
+                </div>
+            `;
+
+            contenido.innerHTML = `
+                <div class="text-center text-secondary py-3">
+                    Sin registros encontrados.
+                </div>
+            `;
+
+        } else {
+            let html = '';
+                    
+            if (resultados.length >=200){
+                alerta.innerHTML = `
+                <div class="alert alert-warning mt-2">
+                    ⚠️ Se han encontrado muchos resultados, flitre su búsqueda
+                </div>
+                `;
+            }
+
+            html += `
+                <div class="alert alert-success mt-2">
+                    ✅ Se encontraron ${resultados.length} resultado(s).
+                </div>
+            `;
+
+
+            html += `
+            `;
+
+
+            resultados.forEach((registro, indice) => {
+                
+                html += `
+                    <div class="card bg-dark border-info mb-3 shadow-sm">
+                        <div class="card-header bg-info text-dark fw-bold">
+                            Resultado ${indice + 1}
+                        </div>
+                        <div class="card-body py-2">
+                `;
+                Object.entries(registro).forEach(([key, value]) => {
+                    if (!value){
+                        return;
+                    }
+
+                    const etiqueta = key
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, letra => letra.toUpperCase());
+                    html += `
+                        <div class="row border-bottom border-secondary py-1">
+                            <div class="col-4 text-info small fw-bold">
+                                ${etiqueta}
+                            </div>
+                            <div class="col-8 text-white small">
+                                ${value ?? ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            contenido.innerHTML = html;
+        }
+
+    } catch (error) {
+
+        console.error('Error consulta externa:', error);
+
+        if (placeholder) {
+            placeholder.style.display = 'block';
+        }
+
+        if (resultado) {
+            resultado.style.display = 'none';
+        }
+
+        alerta.innerHTML = `
+            <div class="alert alert-danger mt-2">
+                ❌ Error al consultar la base externa.
+            </div>
+        `;
+
+    } finally {
+
+        btn.disabled = false;
+        btn.innerHTML = '🔍 Buscar';
+
+    }
+}
+
+function cerrarConsulta() {
+
+    const resultado = document.getElementById('resultadoConsulta');
+    const placeholder = document.getElementById('placeholderConsulta');
+    const contenido = document.getElementById('contenidoConsulta');
+    const alerta = document.getElementById('alertaConsulta');
+
+    if (resultado) {
+        resultado.style.display = 'none';
+    }
+
+    if (placeholder) {
+        placeholder.style.display = 'block';
+    }
+
+    if (contenido) {
+        contenido.innerHTML = '';
+    }
+
+    if (alerta) {
+        alerta.innerHTML = '';
+    }
+}
+function imprimirConsulta() {
+
+    const contenido = document.getElementById('resultadoConsulta');
+
+    if (!contenido) {
+        alert('No hay contenido para imprimir.');
+        return;
+    }
+
+    const ventana = window.open('', '_blank');
+
+    ventana.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Consulta Externa</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                    color: #000;
+                }
+
+                .card {
+                    border: 1px solid #ccc;
+                    margin-bottom: 15px;
+                    border-radius: 4px;
+                }
+
+                .card-header {
+                    background: #f0f0f0;
+                    padding: 8px;
+                    font-weight: bold;
+                }
+
+                .card-body {
+                    padding: 10px;
+                }
+
+                .row {
+                    display: flex;
+                    border-bottom: 1px solid #ddd;
+                    padding: 4px 0;
+                }
+
+                .col-4 {
+                    width: 35%;
+                    font-weight: bold;
+                }
+
+                .col-8 {
+                    width: 65%;
+                }
+
+                .btn,
+                .btn-group {
+                    display: none !important;
+                }
+            </style>
+
+        </head>
+        <body>
+
+            <h2>Consulta Externa</h2>
+
+            ${contenido.innerHTML}
+
+        </body>
+        </html>
+    `);
+
+    ventana.document.close();
+
+    ventana.onload = function () {
+        ventana.print();
+        ventana.close();
+    };
+}
+window.guardarGestion = function () {
+
+    const form = document.getElementById('formGestion');
+
+    if (!form || !form.checkValidity()) {
+        form?.reportValidity();
+        return;
+    }
+
+    const btn = document.querySelector('#modalGestion .btn-success');
+    const original = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.classList.add('disabled');
+    btn.innerHTML = '⏳ Guardando gestión...';
+
+    fetch('?action=registrar_gestion', {
+        method: 'POST',
+        body: new FormData(form)
+    })
+    .then(r => r.json())
+    .then(res => {
+
+        if (res.success) {
+
+            btn.innerHTML = '✅ Gestión guardada';
+
+            setTimeout(() => {
+                location.reload();
+                alert('Gestión guardada satisfactoriamente');
+            }, 800);
+
+        } else {
+
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+            btn.innerHTML = original;
+
+            alert(res.message || 'Error');
+        }
+
+    })
+    .catch(err => {
+
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+        btn.innerHTML = original;
+
+        alert('Error guardando');
+        console.error(err);
+
+    });
+
+};
 </script>

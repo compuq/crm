@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+<?php
+require_once "src/views/layouts/header.php";
+?>
+<!-- <!DOCTYPE html>
 <html lang="es" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -74,6 +77,59 @@
     </style>
 </head>
 <body>
+ -->
+
+    <style>
+        body { 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .login-card { 
+            max-width: 420px; 
+            width: 100%; 
+            border: 1px solid #2a2f3d; 
+            border-radius: 16px; 
+            padding: 2.5rem;
+        }
+        .brand-icon { 
+            width: 56px; 
+            height: 56px; 
+            background: linear-gradient(135deg, #4e73df, #2c4a99); 
+            border-radius: 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0 auto 1.2rem;
+            width: 56px; 
+            height: 56px; 
+        }
+        .img-lex{
+            border-radius: 10px;
+            display: flex;
+            align-items: center; 
+            justify-content: center; 
+            margin: 0 auto 1.2rem;
+            width: 150px; 
+            height: 100px; 
+
+        }
+        .brand-icon svg { stroke: #fff; width: 28px; height: 28px; }
+        .btn-lex { 
+            border: none; 
+            font-weight: 600; 
+            letter-spacing: 0.3px;
+            transition: all 0.2s;
+        }
+        .btn-lex:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(78,115,223,0.3);
+        }
+        .footer-copy { color: #5a6075; font-size: 0.8rem; }
+        
+    </style>
     <div class="login-card">
         <div class="text-center mb-4">
                 <img class="img-lex" src="public/images/lex.jpg" alt="Sistema de Recuperación de Carteras">
@@ -104,6 +160,12 @@
             <p class="footer-copy mb-0">© <?= date('Y') ?> Compuq Tech | v1.0</p>
         </div>
     </div>
+
+<?php
+require_once "src/views/layouts/footer.php";
+
+exit;
+?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
