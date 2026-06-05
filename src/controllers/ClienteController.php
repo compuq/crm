@@ -5,6 +5,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use LEX360\Core\Controller;
 use PDO;
+use Exception;
 class ClienteController extends Controller
 {
 public function listar(): void
@@ -83,7 +84,7 @@ public function actualizar(): void
         $stmt->execute($params);
 
         echo json_encode(['success' => true]);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     }
@@ -555,7 +556,7 @@ public function modificar()
             'mensaje' => 'Acción inválida'
         ]);
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
 
         echo json_encode([
             'ok' => false,
@@ -565,7 +566,7 @@ public function modificar()
 
     exit;
 }
-public function eliminarCliente()
+public function eliminarClienteOld()
 {
     header('Content-Type: application/json; charset=utf-8');
 
@@ -642,7 +643,7 @@ public function eliminarCliente()
                 "Pagos: {$pagos}"
         ]);
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
 
         if ($this->db->inTransaction()) {
             $this->db->rollBack();
@@ -656,4 +657,492 @@ public function eliminarCliente()
 
     exit;
 }
+public function consultarCliente()
+{
+    try {
+
+        $idCliente = (int)($_POST['id'] ?? 0);
+
+        if ($idCliente <= 0) {
+            throw new Exception('Cliente inválido');
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $rol    = $_SESSION['role'] ?? '';
+
+        /*
+        |--------------------------------------------------------------------------
+        | Consulta principal
+        |--------------------------------------------------------------------------
+        */
+
+        $sql = "
+            SELECT
+                c.*,
+
+                ca.nombre_cartera,
+
+                g.nombre AS gestor_nombre,
+                s.nombre AS supervisor_nombre,
+
+                COALESCE(
+                    c.fecha_actualizacion,
+                    c.fecha_asignacion
+                ) AS ultima_actualizacion
+
+            FROM clientes c
+
+            LEFT JOIN carteras ca
+                ON ca.id = c.id_cartera
+
+            LEFT JOIN usuarios g
+                ON g.id = c.id_gestor_asignado
+
+            LEFT JOIN usuarios s
+                ON s.id = c.id_supervisor_cadena
+
+            WHERE c.id = :id
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':id' => $idCliente
+        ]);
+
+        $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cliente) {
+            throw new Exception('Cliente no encontrado');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validación de permisos
+        |--------------------------------------------------------------------------
+        */
+
+        switch ($rol) {
+
+            case 'gestor':
+
+                if ((int)$cliente['id_gestor_asignado'] !== $userId) {
+                    throw new Exception('No tiene permisos para ver este cliente');
+                }
+
+                break;
+
+            case 'supervisor':
+
+                if ((int)$cliente['id_supervisor_cadena'] !== $userId) {
+                    throw new Exception('No tiene permisos para ver este cliente');
+                }
+
+                break;
+
+            case 'supervisor_general':
+            case 'admin':
+                break;
+
+            default:
+                throw new Exception('Rol no autorizado');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Última gestión
+        |--------------------------------------------------------------------------
+        */
+
+        $sqlUltimaGestion = "
+            SELECT
+                h.*,
+                t.nombre AS tipologia_nombre
+
+            FROM historial h
+
+            LEFT JOIN tipologias t
+                ON t.id = h.id_tipologia
+
+            WHERE h.id_cliente = :id_cliente
+
+            ORDER BY h.fecha_gestion DESC
+
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sqlUltimaGestion);
+
+        $stmt->execute([
+            ':id_cliente' => $idCliente
+        ]);
+
+        $ultimaGestion = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Data Extras
+        |--------------------------------------------------------------------------
+        */
+
+        $extrasMostrar = [];
+
+        if (!empty($cliente['data_extras'])) {
+
+            $dataExtras = json_decode(
+                $cliente['data_extras'],
+                true
+            );
+
+            if (is_array($dataExtras)) {
+
+                /*
+                --------------------------------------------------------------
+                | IMPORTANTE
+                | Ajustar nombres reales de extras_cartera
+                --------------------------------------------------------------
+                */
+
+                $sqlExtras = "
+                    SELECT
+                        nombre_campo,
+                        etiqueta
+                    FROM extras_cartera
+                    WHERE id_cartera = :id_cartera
+                    ORDER BY id
+                ";
+
+                $stmtExtras = $this->db->prepare($sqlExtras);
+
+                $stmtExtras->execute([
+                    ':id_cartera' => $cliente['id_cartera']
+                ]);
+
+                $camposExtras = $stmtExtras->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($camposExtras as $campo) {
+
+                    $key = $campo['nombre_campo'];
+
+                    if (
+                        isset($dataExtras[$key]) &&
+                        trim((string)$dataExtras[$key]) !== ''
+                    ) {
+
+                        $extrasMostrar[] = [
+                            'etiqueta' => $campo['etiqueta'],
+                            'valor'    => $dataExtras[$key]
+                        ];
+                    }
+                }
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resumen de pagos
+        |--------------------------------------------------------------------------
+        */
+
+        $sqlPagos = "
+            SELECT
+
+                COUNT(*) AS total_pagos,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN estatus = 'PAGO'
+                            THEN monto
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS monto_confirmado,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN estatus = 'PAGG'
+                            THEN monto
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS monto_pendiente
+
+            FROM pagos
+
+            WHERE id_cliente = :id_cliente
+        ";
+
+        $stmt = $this->db->prepare($sqlPagos);
+
+        $stmt->execute([
+            ':id_cliente' => $idCliente
+        ]);
+
+        $resumenPagos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resumen de promesas
+        |--------------------------------------------------------------------------
+        */
+
+        $sqlPromesas = "
+            SELECT
+
+                COUNT(*) AS total_promesas,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN estatus = 'cumplida'
+                            THEN monto_prometido
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS monto_cumplido,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN estatus = 'pendiente'
+                            THEN monto_prometido
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS monto_pendiente
+
+            FROM promesas
+
+            WHERE id_cliente = :id_cliente
+        ";
+
+        $stmt = $this->db->prepare($sqlPromesas);
+
+        $stmt->execute([
+            ':id_cliente' => $idCliente
+        ]);
+
+        $resumenPromesas = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Indicadores
+        |--------------------------------------------------------------------------
+        */
+
+        $saldoInicial = (float)($cliente['saldo_inicial'] ?? 0);
+
+        $montoRecuperado = (float)($resumenPagos['monto_confirmado'] ?? 0);
+
+        $porcentajeRecuperacion = 0;
+
+        if ($saldoInicial > 0) {
+
+            $porcentajeRecuperacion = round(
+                ($montoRecuperado / $saldoInicial) * 100,
+                2
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vista
+        |--------------------------------------------------------------------------
+        */
+
+        require_once __DIR__ . '/../views/clientes/detalle_cliente.php';
+
+    } catch (Exception $e) {
+
+        echo '
+            <div class="alert alert-danger">
+                ' . htmlspecialchars($e->getMessage()) . '
+            </div>
+        ';
+    }
+}
+public function buscarCliente()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        
+        $usuarios = $this->db->query("
+            SELECT
+                id,
+                nombre,
+                rol,
+                supervisor_id
+            FROM usuarios
+            WHERE activo = true
+            ORDER BY nombre
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        ob_start();
+        require_once __DIR__ . '/../views/clientes/buscar_cliente.php';
+        $viewContent = ob_get_clean();
+        
+        // ✅ ESTO ES CRÍTICO: Incluir frontend.php
+        require_once __DIR__ . '/../views/frontend.php';
+        exit;
+
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    $accion = $_POST['accion'] ?? '';
+
+    try {
+
+        switch ($accion) {
+
+            case 'buscar':
+
+                $nombre = trim($_POST['nombre'] ?? '');
+                $datos  = trim($_POST['datos'] ?? '');
+
+                if ($nombre === '' && $datos === '') {
+                    echo json_encode([
+                        'ok' => false,
+                        'mensaje' => 'Debe indicar un criterio de búsqueda'
+                    ]);
+                    exit;
+                }
+
+                if ($nombre !== '') {
+
+                    $sql = "
+                        SELECT
+                            id,
+                            cuenta,
+                            identificacion,
+                            nombre,
+                            saldo,
+                            telefono_1,
+                            id_gestor_asignado
+                        FROM clientes
+                        WHERE to_tsvector(
+                            'spanish',
+                            lower(coalesce(nombre,''))
+                        ) @@ plainto_tsquery(
+                            'spanish',
+                            lower(:nombre)
+                        )
+                        ORDER BY nombre
+                        LIMIT 20
+                    ";
+
+                    $stmt = $this->db->prepare($sql);
+                    $stmt->execute([
+                        ':nombre' => $nombre
+                    ]);
+
+                } else {
+
+                    $sql = "
+                        SELECT
+                            id,
+                            cuenta,
+                            identificacion,
+                            nombre,
+                            saldo,
+                            telefono_1,
+                            id_gestor_asignado
+                        FROM clientes
+                        WHERE search_vector
+                        @@ websearch_to_tsquery(
+                            'spanish',
+                            :datos
+                        )
+                        ORDER BY nombre
+                        LIMIT 20
+                    ";
+
+                    $stmt = $this->db->prepare($sql);
+                    $stmt->execute([
+                        ':datos' => $datos
+                    ]);
+                }
+
+                echo json_encode([
+                    'ok' => true,
+                    'clientes' => $stmt->fetchAll(PDO::FETCH_ASSOC)
+                ]);
+                exit;
+
+            case 'cargar':
+
+                $id = (int)($_POST['id'] ?? 0);
+
+                $stmt = $this->db->prepare("
+                    SELECT *
+                    FROM clientes
+                    WHERE id = :id
+                ");
+
+                $stmt->execute([
+                    ':id' => $id
+                ]);
+
+                $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$cliente) {
+
+                    echo json_encode([
+                        'ok' => false,
+                        'mensaje' => 'Cliente no encontrado'
+                    ]);
+
+                    exit;
+                }
+
+                $stmt = $this->db->prepare("
+                    SELECT
+                        nombre_campo,
+                        etiqueta
+                    FROM extras_cartera
+                    WHERE id_cartera = :id_cartera
+                    ORDER BY id
+                ");
+
+                $stmt->execute([
+                    ':id_cartera' => $cliente['id_cartera']
+                ]);
+
+                $camposExtras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    'ok' => true,
+                    'cliente' => $cliente,
+                    'campos_extras' => $camposExtras
+                ]);
+
+                exit;
+                default:        echo json_encode([
+                    'ok' => false,
+                    'mensaje' => 'Opción no válida'
+                ]);
+                exit;
+
+        }
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => 'Acción inválida'
+        ]);
+
+    } catch (Exception $e) {
+
+        echo json_encode([
+            'ok' => false,
+            'mensaje' => $e->getMessage()
+        ]);
+    }
+
+    exit;
+}
+
 }

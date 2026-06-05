@@ -106,6 +106,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 });
+function imprimirDiv(idDiv) {
+
+    const contenido = document.getElementById(idDiv);
+
+    if (!contenido) {
+        alert('No se encontró el elemento: ' + idDiv);
+        return;
+    }
+
+    const ventana = window.open('', '_blank');
+
+    ventana.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Impresión</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 5px;
+                    text-align: left;
+                }
+            </style>
+        </head>
+        <body>
+            ${contenido.innerHTML}
+        </body>
+        </html>
+    `);
+
+    ventana.document.close();
+
+    ventana.onload = function () {
+        ventana.focus();
+        ventana.print();
+        ventana.close();
+    };
+}
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <?= $extraScripts ?? '' ?>

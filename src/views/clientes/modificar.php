@@ -587,7 +587,7 @@ async function eliminarCliente() {
     fd.append('id', id);
 
     const r = await fetch(
-        'index.php?action=eliminar_clientes',
+        '?action=eliminar_clientes',
         {
             method: 'POST',
             body: fd

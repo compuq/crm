@@ -47,6 +47,12 @@
                             </a>
                         </li>
                         
+                        <!-- Opción 4: Cliente 360 - despoliega toda la información de un cliente (Nuevo) -->
+                        <li>
+                            <a class="dropdown-item" href="?action=buscar_cliente">
+                                🗺️ Cliente 360
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         
                         <!-- Opción adicional: Panel o Dashboard -->

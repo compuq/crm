@@ -81,6 +81,9 @@ class Router
         'exportar_clientes' => 'ClienteController@exportarClientes',
         'modificar_clientes' => 'ClienteController@modificar',
         'eliminar_clientes' => 'ClienteController@eliminarCliente',
+        'detalle_cliente' => 'ClienteController@detalleCliente',
+        'consultar_cliente' => 'ClienteController@consultarCliente',
+        'buscar_cliente' => 'ClienteController@buscarCliente',
         //Reportes
         // Reportes
         'reportes_gestiones' => 'ReporteController@generarReporte',

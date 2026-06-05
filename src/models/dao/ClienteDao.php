@@ -571,5 +571,35 @@ public function findByRoleExcel(int $userId, string $role, string $search = ''):
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+function getGestores($id,$role):array{
+    if (in_array($role,['administrador'])){
+        $sql = "SELECT nombre, id FROM usuarios WHERE supervisor_id = :supervisor";
+        $params=['supervisor'=>$id];
+    } else {
+        return [];
+    }
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    
+}
+function getSupervisores($role):array{
+    if (in_array($role,['admin','administrador_general'])){
+        $sql = "SELECT nombre, id FROM usuarios WHERE rol = 'supervisor'";
+        $params=[];
+    } else {
+        return [];
+    }
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    
+}
 
 }
