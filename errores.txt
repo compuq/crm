@@ -1,0 +1,1 @@
+Error en Validar PagoMonto excede el autorizado.

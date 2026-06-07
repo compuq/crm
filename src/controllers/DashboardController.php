@@ -1,8 +1,7 @@
 <?php
 namespace LEX360\Controllers;
-
+use PDO;
 use LEX360\Core\Controller;
-
 class DashboardController extends Controller
 {
     public function index(): void
@@ -59,4 +58,252 @@ class DashboardController extends Controller
         echo json_encode($respuesta, JSON_NUMERIC_CHECK);
         exit; // 🔴 CRUCIAL: evita que se imprima HTML, views o logs después del JSON
     }
+    public function dashboardReporte(): void
+{
+    $this->session->requireAuth();
+
+    $user = $this->session->getUser();
+
+    $userId = (int)$user['id'];
+    $role   = $user['role'];
+
+    // ==========================
+    // FILTROS
+    // ==========================
+
+    $periodo = $_GET['periodo'] ?? 'mes_actual';
+
+    $supervisorId = !empty($_GET['supervisor'])
+        ? (int)$_GET['supervisor']
+        : null;
+
+    $gestorId = !empty($_GET['gestor'])
+        ? (int)$_GET['gestor']
+        : null;
+
+    switch ($periodo) {
+
+        case 'hoy':
+
+            $inicio = date('Y-m-d');
+            $fin    = date('Y-m-d');
+
+            break;
+
+        case 'semana_pasada':
+
+            $inicio = date(
+                'Y-m-d',
+                strtotime('monday last week')
+            );
+
+            $fin = date(
+                'Y-m-d',
+                strtotime('sunday last week')
+            );
+
+            break;
+
+        case 'mes_pasado':
+
+            $inicio = date(
+                'Y-m-01',
+                strtotime('first day of last month')
+            );
+
+            $fin = date(
+                'Y-m-t',
+                strtotime('last day of last month')
+            );
+
+            break;
+
+        case 'personalizado':
+
+            $inicio = $_GET['inicio']
+                ?? date('Y-m-01');
+
+            $fin = $_GET['fin']
+                ?? date('Y-m-d');
+
+            break;
+
+        default:
+
+            $inicio = date('Y-m-01');
+            $fin    = date('Y-m-d');
+    }
+
+    // ==========================
+    // KPIs
+    // ==========================
+
+    $gestiones =
+        $this->clienteDao->getGestionesPeriodo(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+
+    $clientesGestionados =
+        $this->clienteDao->getClientesGestionadosPeriodo(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+
+    $promesas =
+        $this->clienteDao->getPromesasPeriodo(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+
+    $montoPromesas =
+        $this->clienteDao->getMontoPromesasPeriodo(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+
+    $saldoRecuperado =
+        $this->clienteDao->getSaldoRecuperadoPeriodo(
+            $userId,
+            $role,
+            $supervisorId,
+            $gestorId
+        );
+
+    $graficaGestiones =
+        $this->clienteDao->getGestionesPorDia(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+    $graficaResultados =
+        $this->clienteDao->getPromesasPagosPorDia(
+            $userId,
+            $role,
+            $inicio,
+            $fin,
+            $supervisorId,
+            $gestorId
+        );
+
+    // ==========================
+    // COMBOS
+    // ==========================
+
+    $supervisores = [];
+    $gestores = [];
+
+    if (in_array($role, ['admin','supervisor_general'])) {
+
+        $supervisores =
+            $this->getSupervisoresDashboard();
+
+        if ($supervisorId) {
+
+            $gestores =
+                $this->getGestoresDashboard(
+                    $supervisorId
+                );
+        }
+
+    } elseif ($role === 'supervisor') {
+
+        $gestores =
+            $this->getGestoresDashboard(
+                $userId
+            );
+    }
+
+    // ==========================
+    // VISTA
+    // ==========================
+
+    $pageTitle = 'Dashboard Avanzado';
+
+    ob_start();
+
+    require_once __DIR__ .
+        '/../views/dashboard/reporte.php';
+
+    $viewContent = ob_get_clean();
+
+    require_once __DIR__ .
+        '/../views/frontend.php';
+}
+public function getSupervisoresDashboard(): array
+{
+    $sql = "
+        SELECT
+            id,
+            nombre,
+            usuario
+
+        FROM usuarios
+
+        WHERE rol = 'supervisor'
+        AND activo = true
+
+        ORDER BY nombre
+    ";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+public function getGestoresDashboard(
+    ?int $supervisorId = null
+): array {
+
+    $sql = "
+        SELECT
+            id,
+            nombre,
+            usuario
+
+        FROM usuarios
+
+        WHERE rol = 'gestor'
+        AND activo = true
+    ";
+
+    $params = [];
+
+    if (!empty($supervisorId)) {
+
+        $sql .= "
+            AND supervisor_id = :supervisor
+        ";
+
+        $params['supervisor'] = $supervisorId;
+    }
+
+    $sql .= "
+        ORDER BY nombre
+    ";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }

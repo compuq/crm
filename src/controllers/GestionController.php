@@ -263,7 +263,8 @@ public function registrarGestion(): void
                         estatus,
                         validado_por,
                         fecha_validacion,
-                        id_historial
+                        id_historial,
+                        id_promesa
                     )
                     VALUES (
                         :c,
@@ -273,7 +274,8 @@ public function registrarGestion(): void
                         'PAGG',
                         NULL,
                         NULL,
-                        :id_historial
+                        :id_historial,
+                        :idPromesaSeleccionada
                     )
                 ");
 
@@ -281,7 +283,8 @@ public function registrarGestion(): void
                     'c'    => $clienteId,
                     'm'    => $monto,
                     'ref'  => substr($_POST['referencia_pago'] ?? '', 0, 100),
-                    'id_historial' => $historialId
+                    'id_historial' => $historialId,
+                    'idPromesaSeleccionada'=>$idPromesaSeleccionada
                 ]);
             }
         }
@@ -599,6 +602,46 @@ public function registrarGestion(): void
                 WHERE id_historial IN ($placeholders)
             ");
             $stmt->execute($ids);
+
+            //CONSULTAR LOS PAGOS QUE ESTÁN CONFIRMADOS COMO PAGO
+            $stmt = $this->db->prepare("
+                SELECT id_cliente, monto as total
+                FROM pagos
+                WHERE estatus = 'PAGO' AND id_historial IN ($placeholders)
+            ");
+            $stmt->execute($ids);
+
+            //REGRESAR SALDO A LOS CLIENTES QUE SE ELIMINA EL PAGO
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $this->db->prepare("
+                    UPDATE clientes
+                    SET saldo = saldo + :monto
+                    WHERE id = :cid
+                ")->execute([
+                    'monto' => $row['total'],
+                    'cid'   => $row['id_cliente']
+                ]);
+            }        
+
+        // Regresar promesas a pendiente
+        $stmt = $this->db->prepare("
+            UPDATE promesas
+            SET estatus = 'pendiente'
+            WHERE id IN (
+                SELECT id_promesa
+                FROM pagos
+                WHERE id_historial IN ($placeholders)
+                AND id_promesa IS NOT NULL
+            )
+        ");
+        $stmt->execute($ids);
+
+        // Eliminar pagos
+        $stmt = $this->db->prepare("
+            DELETE FROM pagos
+            WHERE id_historial IN ($placeholders)
+        ");
+        $stmt->execute($ids);            
 
             // Eliminar pagos
             $stmt = $this->db->prepare("

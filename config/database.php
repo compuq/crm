@@ -1,6 +1,6 @@
 <?php
 return [
-    'host'     => '217.77.15.168',
+    'host'     => 'localhost',
     'port'     => '5432',
     'dbname'   => 'crm',
     'user'     => 'postgres',      // ← Ajusta a tu usuario

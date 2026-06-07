@@ -493,7 +493,7 @@ function renderTablaClientes($clientes, $configExtras = [])
                                     <label class="form-label small text-warning fw-bold">
                                         📌 ¿A qué promesa se aplica este pago?
                                     </label>
-
+                                    
                                     <div id="lista-promesas"
                                         class="bg-dark rounded p-2"
                                             style="max-height:150px; overflow-y:auto;">

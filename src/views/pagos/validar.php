@@ -1,3 +1,33 @@
+<?php
+if ($user['role']=="supervisor_general"):
+    echo '<div class="card bg-dark border-secondary p-4 mb-4">';
+    if (!$validacion_usuario){
+        echo '
+        Usuario sin permisos
+        ';
+    } else{
+        foreach ($validacion_usuario as $dato_usuario){
+        $nombre_supervisor = $dato_usuario['nombre_supervisor'];
+        $usuario_supervisor = $dato_usuario['usuario_supervisor'];
+        $monto_autorizado  = number_format($dato_usuario['monto_autorizado']??0,2,'.',',');
+        $fecha_autorizado  = $dato_usuario['fecha_autorizacion'];
+        $fecha_vencimiento = $dato_usuario['fecha_vencimiento'];
+        $nombre_admin      = $dato_usuario['nombre_admin'];
+        $fecha_autorizacion= $dato_usuario['fecha_autorizacion'];
+        $fecha_vencimiento = $dato_usuario['fecha_vencimiento'];
+        $observacion       = $dato_usuario['observacion'];
+        $estado            = $dato_usuario['estado'];
+
+        echo "💵Monto autorizado:Q$monto_autorizado 
+        📅Fecha autorizado:$fecha_autorizacion 🔚Vencimiento:$fecha_vencimiento 🔝Atorizado por:$nombre_admin";
+        ?>
+
+        <?php
+        }
+    }
+    endif;
+    echo '</div>';
+?>
 <!-- views/pagos/validar.php -->
 <div class="card bg-dark border-secondary p-4 mb-4">
     <h4 class="mb-3 fw-bold">✅ Validación de Pagos</h4>
@@ -105,7 +135,7 @@
                     <td><?= htmlspecialchars($p['comentario']) ?></td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-success" 
-                                onclick="abrirModalValidar(<?= $p['pago_id'] ?>, '<?= addslashes($p['nombre']) ?>', <?= $p['monto'] ?>)">
+                                onclick="abrirModalValidar(<?= $p['pago_id'] ?>, '<?= addslashes($p['nombre']) ?>', <?= $p['monto'] ?>, '<?= ($p['comentario']) ?>')">
                             ✅ Validar
                         </button>
                     </td>
@@ -136,6 +166,7 @@
                     <p class="text-secondary small mb-3">
                         Cliente: <strong id="modalClienteNombre" class="text-info"></strong><br>
                         Monto: <strong class="text-success" id="modalMonto"></strong>
+                        Comentario: <label class="form-label text-secondary" id="modalComentario"></label>
                     </p>
                     
                     <div class="mb-3">
@@ -165,11 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formValidarPago');
 
     // Función global para abrir modal
-    window.abrirModalValidar = function(pagoId, clienteNombre, monto) {
+    window.abrirModalValidar = function(pagoId, clienteNombre, monto, comentario) {
         document.getElementById('pagoIdInput').value = pagoId;
         document.getElementById('modalClienteNombre').textContent = clienteNombre;
         document.getElementById('modalMonto').textContent = 'Q' + parseFloat(monto).toFixed(2);
-        document.getElementById('inputReferencia').value = '';
+        document.getElementById('modalComentario').textContent = comentario;
+        document.getElementById('inputReferencia').value = comentario;
         modal.show();
     };
 

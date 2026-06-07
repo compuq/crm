@@ -12,6 +12,7 @@ class Router
         // Dashboard
         'dashboard'         => 'DashboardController@index',
         'dashboard_stats'   => 'DashboardController@stats',
+        'dashboard_reportes'=> 'DashboardController@dashboardReporte',
         // Clientes & Gestión
         'clientes'          => 'ClienteController@listar',
         'registrar_gestion' => 'GestionController@registrarGestion',
@@ -28,7 +29,8 @@ class Router
         // Pagos
         'validar_pagos'     => 'PagoController@validar',
         'validar_pago' => 'PagoController@validarPago',
-        
+        'validaciones' => 'PagoController@validaciones',
+        'listar_validaciones' => 'PagoController@listarValidaciones',
         // Asistencia
         'asistencia'        => 'AsistenciaController@index',
         'registrar_movimiento' => 'AsistenciaController@registrarMovimiento',

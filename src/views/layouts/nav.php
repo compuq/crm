@@ -65,16 +65,14 @@
                 </li>
             <?php endif; ?>            
 
+            <li class="nav-item"><a class="nav-link" href="?action=dashboard_reportes">📆 Dashboard Filtrado</a></li>
+
             <!-- MENÚ SEGÚN ROL -->
             <?php if ($user['role'] === 'gestor'): ?>
                 <li class="nav-item"><a class="nav-link" href="?action=clientes">👥 Mis Clientes</a></li>
                 <li class="nav-item"><a class="nav-link" href="?action=asistencia">🕒 Asistencia</a></li>
 
                 
-            <?php if (in_array($user['role'], ['gestor'])): ?>
-
-                <li class="nav-item"><a class="nav-link" href="?action=clientes">📞 Operación Global</a></li>
-            <?php endif; ?>
 
             <!--<li class="nav-item"><a class="nav-link" href="?action=mis_promesas">🤝 Mis Promesas</a></li>-->
             <?php elseif ($user['role'] === 'supervisor'): ?>
@@ -130,11 +128,19 @@
                                 💾 Backup
                             </a>
                         </li>
+                        <?php if ($rol=='admin'):?>
+
+                        <li>
+                            <a class="dropdown-item" href="?action=listar_validaciones">
+                                ✔️ Aut. validaciones monto
+                            </a>
+                        </li>
+                    <?php endif;?>
                     
                     </ul>
                 </li>
                 <?php if ($rol=='admin'):?>
-                <li class="nav-item"><a class="nav-link" href="?action=configuracion">️⚙️ Configuración</a></li>
+                <!--<li class="nav-item"><a class="nav-link" href="?action=configuracion">️⚙️ Configuración</a></li>-->
                 <?php endif;?>
                 <li class="nav-item"><a class="nav-link" href="?action=usuarios">👤 Usuarios</a></li>
             <?php endif; ?>
@@ -196,3 +202,50 @@
     </div>
 </div>
 
+<script>
+document.getElementById('formCambiarClave').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const btnSubmit = form.querySelector('button[type="submit"]');
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '⏳ Procesando...';
+
+    try {
+        const response = await fetch('?action=cambiar_clave', {
+            method: 'POST',
+            body: new FormData(form)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: data.msg
+            });
+
+            form.reset();
+
+            bootstrap.Modal.getInstance(
+                document.getElementById('modalCambiarClave')
+            ).hide();
+
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.msg
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Ocurrió un error al procesar la solicitud.');
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '💾 Actualizar';
+    }
+});
+</script>

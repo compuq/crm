@@ -30,6 +30,8 @@ class UsuarioController extends Controller
         require_once __DIR__ . '/../views/frontend.php';
     }
 
+
+
     public function guardar(): void
     {
         $this->session->requireAuth();
@@ -50,12 +52,29 @@ class UsuarioController extends Controller
         }
 
         // 🔐 Validaciones de jerarquía estrictas
-        if ($rol === 'gestor' && $adminUser['role'] === 'supervisor') {
-            $sup_id = $adminUser['id']; // Forzar asignación al supervisor actual
-        } elseif ($rol !== 'gestor' && $adminUser['role'] !== 'admin') {
-            echo json_encode(['success'=>false, 'msg'=>'No tienes permisos para crear/editar este rol']); return;
+        $permisos = [
+            'admin' => ['admin', 'supervisor_general', 'supervisor', 'gestor'],
+            'supervisor_general' => ['supervisor', 'gestor'],
+            'supervisor' => ['gestor'],
+            'gestor' => []
+        ];
+
+        $rolActual = $adminUser['role']; // usuario logueado
+        $rolDestino = $rol; // rol que se desea crear o modificar
+
+        // Verificar permisos
+        if (!isset($permisos[$rolActual]) || !in_array($rolDestino, $permisos[$rolActual])) {
+            echo json_encode([
+                'success' => false,
+                'msg' => 'No tienes permisos para crear o modificar este rol.'
+            ]);
+            return;
         }
 
+        // Si es supervisor, forzar que el gestor quede asignado a él
+        if ($rolActual === 'supervisor' && $rolDestino === 'gestor') {
+            $sup_id = $adminUser['id'];
+        }
         $hash = !empty($password) ? password_hash($password, PASSWORD_DEFAULT) : null;
 
         try {

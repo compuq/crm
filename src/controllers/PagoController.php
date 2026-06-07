@@ -1,8 +1,10 @@
 <?php
 namespace LEX360\Controllers;
 
+use Exception;
 use LEX360\Core\Controller;
-
+use DateTime;
+use NumberFormatter;
 class PagoController extends Controller
 {
     public function validar(): void
@@ -91,6 +93,12 @@ class PagoController extends Controller
         $tipoMensaje = $_SESSION['flash_type'] ?? '';
         unset($_SESSION['flash_message'], $_SESSION['flash_type']);
         
+        $validacion_usuario = [];
+
+        if($user['role']=='supervisor_general'){
+            $validacion_usuario = $this->clienteDao->getValidaciones($user['id']);
+        }
+
         // ✅ Renderizar con layout maestro
         ob_start();
         require_once __DIR__ . '/../views/pagos/validar.php';
@@ -101,10 +109,49 @@ class PagoController extends Controller
     /**
      * Valida un pago individual vía AJAX (modal)
      */
+    private function getPagg($pagoId){
+                $stmt = $this->db->prepare("
+                SELECT p.id, p.id_historial, p.id_cliente, p.monto, h.estatus as hist_estatus
+                FROM pagos p
+                JOIN historial h ON h.id = p.id_historial
+                WHERE p.id = :pago_id AND p.estatus = 'PAGG'
+                FOR UPDATE
+            ");
+            $stmt->execute(['pago_id' => $pagoId]);
+            $pago = $stmt->fetch();
+            return $pago;
+    }
     public function validarPago(): void
     {
+
+
+
         header('Content-Type: application/json');
         $this->session->requireAuth();
+        $id_super=$_SESSION['user_id'];
+
+        $datos_validacion=$this->clienteDao->getValidaciones($id_super);
+        $datos_validacion=$datos_validacion[0]??[];
+        if (!$datos_validacion) {
+            echo json_encode(['success' => false, 'message' => 'Usuario no autorizado para validaciones.']);
+            exit;
+        } 
+        
+        $fechaVencimiento = new DateTime($datos_validacion['limite']);
+        $ahora = new DateTime();
+
+        $monto_autorizado = $datos_validacion['monto_autorizado'];
+
+        if ($fechaVencimiento < $ahora) {
+            echo json_encode(['success' => false, 'message' => 'Autorización vencida, notifique a su administrador.']);
+            exit;
+        } 
+        if ($datos_validacion['estado']!='ACTIVA') {
+            echo json_encode(['success' => false, 'message' => 'Autorización inactiva, notifique a su administrador.']);
+            exit;
+        } 
+
+
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Método no permitido']);
@@ -135,9 +182,15 @@ class PagoController extends Controller
             $pago = $stmt->fetch();
 
             if (!$pago) {
-                throw new \Exception('Pago no encontrado o ya validado');
+                throw new Exception('Pago no encontrado o ya validado.');
             }
 
+            $montoPago = (float)$pago['monto'];
+            $montoAutorizado = (float)$monto_autorizado;
+
+            if ($montoPago > $montoAutorizado) {
+                throw new Exception('Monto excede el autorizado.');
+            }                
             // 2. Actualizar tabla pagos
             $this->db->prepare("
                 UPDATE pagos 
@@ -218,4 +271,95 @@ class PagoController extends Controller
         }
         exit;
     }
+    public function validaciones()
+    {
+        $user = $this->session->getUser();
+
+        $id_admin = $user['id'];
+        $rol = $user['role'];
+
+        if ($rol != 'admin') {
+
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Transacción no autorizada para tu perfil.'
+            ]);
+            exit;
+        }
+
+        $operacion = $_POST['operacion'] ?? '';
+
+        $id_supervisor    = $_POST['id_supervisor'] ?? null;
+        $monto_autorizado = $_POST['monto_autorizado'] ?? null;
+        $fecha_vencimiento = $_POST['fecha_vencimiento'] ?? null;
+        $observacion      = $_POST['observacion'] ?? '';
+        $estado           = $_POST['estado'] ?? 'ACTIVA';
+
+        switch ($operacion) {
+
+            case 'insertar':
+
+                $resultado = $this->clienteDao->insertValidaciones(
+                    $id_supervisor,
+                    $id_admin,
+                    $monto_autorizado,
+                    $fecha_vencimiento,
+                    $observacion
+                );
+
+                break;
+
+            case 'actualizar':
+
+                $resultado = $this->clienteDao->updateValidaciones(
+                    $id_supervisor,
+                    $id_admin,
+                    $monto_autorizado,
+                    $fecha_vencimiento,
+                    $estado,
+                    $observacion
+                );
+
+                break;
+
+            case 'eliminar':
+
+                $resultado = $this->clienteDao->eliminarValidacion(
+                    $id_supervisor
+                );
+
+                break;
+
+            default:
+
+                $resultado = [
+                    'status' => 'error',
+                    'message' => 'Operación no válida.'
+                ];
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($resultado);
+        exit;
+    }
+ public function listarValidaciones()
+    {
+        $user = $this->session->getUser();
+
+        if ($user['role'] != 'admin') {
+            die('Acceso denegado');
+        }
+
+        $lista_validaciones = $this->clienteDao->getValidaciones();
+        $supervisores=$this->clienteDao->getSupervisoresGenerales($user['role']);
+
+        ob_start();
+ 
+
+        require_once __DIR__ . '/../views/pagos/validaciones.php';
+
+        $viewContent = ob_get_clean();
+
+        require_once __DIR__ . '/../views/frontend.php';
+    }   
 }
