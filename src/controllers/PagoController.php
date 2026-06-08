@@ -5,6 +5,7 @@ use Exception;
 use LEX360\Core\Controller;
 use DateTime;
 use NumberFormatter;
+use PDO;
 class PagoController extends Controller
 {
     public function validar(): void
@@ -262,7 +263,7 @@ class PagoController extends Controller
             $this->db->commit();
             echo json_encode(['success' => true, 'message' => '✅ Pago validado correctamente']);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->db->rollBack();
             error_log('[LEX360] validarPago: ' . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
@@ -362,4 +363,373 @@ class PagoController extends Controller
 
         require_once __DIR__ . '/../views/frontend.php';
     }   
+
+    public function guardarPago():void{
+        header('Content-Type: application/json');
+
+        // 1. Configuración de la ruta FUERA del acceso público
+        // Nota: Usa barras inclinadas (/) incluso en Windows, PHP lo interpreta correctamente.
+        define('BASE_UPLOAD_DIR', 'C:/pagos/');
+
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+            exit;
+        }
+
+        // 2. Validar datos del formulario
+        $id_pago = filter_input(INPUT_POST, 'id_pago', FILTER_VALIDATE_INT);
+        $descripcion = trim($_POST['descripcion'] ?? '');
+
+        if (!$id_pago || empty($descripcion)) {
+            echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios.']);
+            exit;
+        }
+
+        // 3. Validar archivo
+        if (!isset($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'Error al recibir el archivo.']);
+            exit;
+        }
+
+        $archivo = $_FILES['archivo'];
+        $nombre_original = $archivo['name'];
+        $tamano = $archivo['size'];
+        $ruta_temporal = $archivo['tmp_name'];
+
+        // 4. Validaciones de seguridad
+        $MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+        $ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
+        if ($tamano > $MAX_SIZE) {
+            echo json_encode(['success' => false, 'message' => 'El archivo excede los 5 MB.']);
+            exit;
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $tipo_archivo_real = finfo_file($finfo, $ruta_temporal);
+        finfo_close($finfo);
+
+        if (!in_array($tipo_archivo_real, $ALLOWED_MIME_TYPES)) {
+            echo json_encode(['success' => false, 'message' => 'Tipo de archivo no permitido (Solo PDF, JPG, PNG).']);
+            exit;
+        }
+
+        // 5. Generar nombre seguro y rutas
+        $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION)) ?: 'bin';
+        $nombre_guardado = bin2hex(random_bytes(16)) . '.' . $extension;
+
+        // Ruta relativa para la BD (ej: "2026/06/")
+        $ruta_relativa = date('Y/m') . '/'; 
+        // Ruta absoluta real en el disco (ej: "C:/pagos/2026/06/")
+        $ruta_absoluta = BASE_UPLOAD_DIR . $ruta_relativa; 
+
+        // Crear directorio si no existe (0755 funciona en Windows para crear carpetas)
+        if (!is_dir($ruta_absoluta)) {
+            if (!mkdir($ruta_absoluta, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'No se pudo crear el directorio en el servidor.']);
+                exit;
+            }
+        }
+
+        $ruta_final_en_disco = $ruta_absoluta . $nombre_guardado;
+
+        // 6. Transacción: Mover archivo + Guardar en BD
+        $this->db->beginTransaction();
+        try {
+            if (!move_uploaded_file($ruta_temporal, $ruta_final_en_disco)) {
+                throw new Exception('No se pudo guardar el archivo en el disco.');
+            }
+
+            $sql = "INSERT INTO pagos_documentos 
+                    (id_pago, descripcion, nombre_original, nombre_guardado, ruta, tipo_archivo, tamano) 
+                    VALUES (:id_pago, :descripcion, :nombre_original, :nombre_guardado, :ruta, :tipo_archivo, :tamano)";
+                    
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':id_pago'         => $id_pago,
+                ':descripcion'     => $descripcion,
+                ':nombre_original' => $nombre_original,
+                ':nombre_guardado' => $nombre_guardado,
+                ':ruta'            => $ruta_relativa, // Se guarda "2026/06/"
+                ':tipo_archivo'    => $tipo_archivo_real,
+                ':tamano'          => $tamano
+            ]);
+
+            $this->db->commit();
+            echo json_encode(['success' => true, 'message' => 'Documento subido exitosamente.']);
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            if (file_exists($ruta_final_en_disco)) {
+                @unlink($ruta_final_en_disco); // Limpieza de archivo huérfano
+            }
+            error_log("Error subida soporte: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Error interno al guardar el documento.']);
+        }
+     }
+     public function subirSoporte() {
+        // 1. Forzar respuesta JSON
+        header('Content-Type: application/json');
+
+        // 2. Validar que sea petición POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+            return;
+        }
+
+        // 3. Obtener y validar datos del formulario
+        $id_pago = filter_input(INPUT_POST, 'id_pago', FILTER_VALIDATE_INT);
+        $descripcion = trim($_POST['descripcion'] ?? '');
+
+        if (!$id_pago || empty($descripcion)) {
+            echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios (ID de pago o descripción).']);
+            return;
+        }
+
+        // 4. Validar que se haya enviado un archivo sin errores de PHP
+        if (!isset($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
+            $error_msg = $_FILES['archivo']['error'] ?? 'Desconocido';
+            echo json_encode(['success' => false, 'message' => "Error al recibir el archivo (Código: $error_msg)."]);
+            return;
+        }
+
+        $archivo = $_FILES['archivo'];
+        $nombre_original = $archivo['name'];
+        $tamano = $archivo['size'];
+        $ruta_temporal = $archivo['tmp_name'];
+
+        // 5. Validaciones de Seguridad del Archivo
+        $MAX_SIZE = 5 * 1024 * 1024; // 5 MB en bytes
+        $ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
+        if ($tamano > $MAX_SIZE) {
+            echo json_encode(['success' => false, 'message' => 'El archivo excede el tamaño máximo permitido de 5 MB.']);
+            return;
+        }
+
+        // Validar el MIME type REAL (no confiar en la extensión del navegador)
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $tipo_archivo_real = finfo_file($finfo, $ruta_temporal);
+        finfo_close($finfo);
+
+        if (!in_array($tipo_archivo_real, $ALLOWED_MIME_TYPES)) {
+            echo json_encode(['success' => false, 'message' => 'Tipo de archivo no permitido. Solo se aceptan PDF, JPG o PNG.']);
+            return;
+        }
+
+        // 6. Generar nombre seguro y rutas
+        $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+        // Fallback por si el archivo no tiene extensión pero el MIME es válido
+        if (empty($extension)) {
+            $extension = ($tipo_archivo_real === 'application/pdf') ? 'pdf' : 'jpg';
+        }
+
+        $nombre_guardado = bin2hex(random_bytes(16)) . '.' . $extension; // Ej: 8f3a9b...c2d1.pdf
+        
+        // Ruta relativa para la BD (ej: "2026/06/")
+        $ruta_relativa = date('Y/m') . '/'; 
+        // Ruta absoluta real en el disco (ej: "C:/pagos/2026/06/")
+        $ruta_absoluta = 'C:/pagos/' . $ruta_relativa; 
+
+        // Crear la carpeta si no existe (0755 funciona en Windows para crear carpetas)
+        if (!is_dir($ruta_absoluta)) {
+            if (!mkdir($ruta_absoluta, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'No se pudo crear el directorio de destino en el servidor.']);
+                return;
+            }
+        }
+
+        $ruta_final_en_disco = $ruta_absoluta . $nombre_guardado;
+
+        // 7. Transacción: Mover archivo + Guardar en BD
+        $this->db->beginTransaction();
+
+        try {
+            // A. Mover el archivo del temporal a su destino final
+            if (!move_uploaded_file($ruta_temporal, $ruta_final_en_disco)) {
+                throw new Exception('No se pudo mover el archivo al directorio de destino.');
+            }
+
+            // B. Insertar en la base de datos
+            $sql = "INSERT INTO pagos_documentos 
+                    (id_pago, descripcion, nombre_original, nombre_guardado, ruta, tipo_archivo, tamano) 
+                    VALUES 
+                    (:id_pago, :descripcion, :nombre_original, :nombre_guardado, :ruta, :tipo_archivo, :tamano)";
+                    
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':id_pago'         => $id_pago,
+                ':descripcion'     => $descripcion,
+                ':nombre_original' => $nombre_original,
+                ':nombre_guardado' => $nombre_guardado,
+                ':ruta'            => $ruta_relativa, // Guardamos SOLO la ruta relativa
+                ':tipo_archivo'    => $tipo_archivo_real,
+                ':tamano'          => $tamano
+            ]);
+
+            // C. Confirmar la transacción
+            $this->db->commit();
+            
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Documento subido y registrado exitosamente.'
+            ]);
+
+        } catch (Exception $e) {
+            // Si algo falla, revertimos la base de datos
+            $this->db->rollBack();
+            
+            // Y borramos el archivo del disco si se llegó a copiar (evita archivos huérfanos)
+            if (isset($ruta_final_en_disco) && file_exists($ruta_final_en_disco)) {
+                @unlink($ruta_final_en_disco);
+            }
+            
+            // Loguear el error real en tu servidor (revisa tu php_error.log)
+            error_log("Error al subir soporte de pago: " . $e->getMessage());
+            
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Ocurrió un error interno al guardar el documento.'
+            ]);
+        }
+    }
+    public function descargarPago(){
+    // 1. Iniciar sesión y validar que el usuario esté logueado
+    session_start();
+    if (!isset($_SESSION['user_id'])) { // Ajusta a tu lógica de autenticación
+        http_response_code(403);
+        die('Acceso denegado.');
+    }
+
+    // 2. Obtener el ID del documento de la URL (ej: descargar.php?id=15)
+    $id_doc = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    if (!$id_doc) {
+        die('ID de documento inválido.');
+    }
+
+    // 3. Conexión a la BD para obtener los datos del archivo
+    //Ya existe $this->db predefinida
+ 
+    $stmt = $this->db->prepare("SELECT nombre_original, nombre_guardado, ruta, tipo_archivo, activo FROM pagos_documentos WHERE id = :id");
+    $stmt->execute([':id' => $id_doc]);
+    $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$doc || $doc['activo'] == false) {
+        http_response_code(404);
+        die('Documento no encontrado o eliminado.');
+    }
+
+    // 4. Construir la ruta absoluta real
+    define('BASE_UPLOAD_DIR', 'C:/pagos/');
+    $ruta_absoluta = BASE_UPLOAD_DIR . $doc['ruta'] . $doc['nombre_guardado'];
+
+    // 5. Verificar que el archivo existe físicamente
+    if (!file_exists($ruta_absoluta)) {
+        http_response_code(404);
+        die('El archivo no existe en el servidor.');
+    }
+
+    // 6. Enviar el archivo al navegador de forma segura
+    // Limpiar cualquier salida previa para evitar corrupción del archivo
+    if (ob_get_level()) ob_end_clean();
+
+    header('Content-Description: File Transfer');
+    header('Content-Type: ' . $doc['tipo_archivo']);
+    // Forzar descarga o visualización en navegador (inline = lo muestra, attachment = lo descarga)
+    header('Content-Disposition: inline; filename="' . addslashes($doc['nombre_original']) . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($ruta_absoluta));
+
+    // Leer y enviar el archivo
+    readfile($ruta_absoluta);
+    exit;        
+    }
+    public function obtenerDocumentos(){
+        header('Content-Type: application/json');
+        // Tu conexión PDO (la misma que usas siempre) $this->db
+
+        $id_pago = filter_input(INPUT_GET, 'id_pago', FILTER_VALIDATE_INT);
+
+        if (!$id_pago) {
+            echo json_encode([]);
+            exit;
+        }
+
+        $stmt = $this->db->prepare("SELECT id, descripcion, nombre_original, tipo_archivo, tamano, fecha_subida 
+                            FROM pagos_documentos 
+                            WHERE id_pago = :id_pago AND activo = TRUE 
+                            ORDER BY fecha_subida DESC");
+        $stmt->execute([':id_pago' => $id_pago]);
+        $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode($documentos);
+
+    }
+    public function borrarImagen() {
+        header('Content-Type: application/json');
+
+        // Validar que sea POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+            return;
+        }
+
+        // Obtener y validar ID
+        $id_documento = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+        
+        if (!$id_documento) {
+            echo json_encode(['success' => false, 'message' => 'ID de documento inválido.']);
+            return;
+        }
+
+        // Iniciar transacción
+        $this->db->beginTransaction();
+
+        try {
+            // 1. Obtener los datos del documento (ruta y nombre_guardado)
+            $stmt = $this->db->prepare("SELECT nombre_guardado, ruta, activo FROM pagos_documentos WHERE id = :id FOR UPDATE");
+            $stmt->execute([':id' => $id_documento]);
+            $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$doc) {
+                throw new Exception('Documento no encontrado.');
+            }
+
+            if ($doc['activo'] == false) {
+                throw new Exception('El documento ya está eliminado.');
+            }
+
+            // 2. Soft delete: Marcar como inactivo en la base de datos
+            $updateStmt = $this->db->prepare("UPDATE pagos_documentos SET activo = FALSE WHERE id = :id");
+            $updateStmt->execute([':id' => $id_documento]);
+
+            // 3. Opcional: Eliminar físicamente el archivo del disco
+            // Si prefieres mantener el archivo, comenta o elimina esta sección
+            $ruta_absoluta = 'C:/pagos/' . $doc['ruta'] . $doc['nombre_guardado'];
+            if (file_exists($ruta_absoluta)) {
+                @unlink($ruta_absoluta); // @ suprime warnings si no se puede borrar
+            }
+
+            // Confirmar transacción
+            $this->db->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Documento eliminado correctamente.'
+            ]);
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error al borrar documento: " . $e->getMessage());
+            
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 }

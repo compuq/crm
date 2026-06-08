@@ -463,7 +463,7 @@ class ReporteController extends Controller
         // QUERY PRINCIPAL
         // =========================
         $sql = "
-            SELECT h.id, h.fecha_gestion, h.estatus, COALESCE(p.monto, 0) AS monto, h.comentario,
+            SELECT p.id as id_pago, h.id, h.fecha_gestion, h.estatus, COALESCE(p.monto, 0) AS monto, h.comentario,
                    c.nombre AS nombre, c.cuenta, c.identificacion, u.nombre AS gestor, p.referencia_bancaria
             FROM historial h
             JOIN clientes c ON c.id = h.id_cliente

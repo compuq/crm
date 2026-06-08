@@ -31,6 +31,10 @@ class Router
         'validar_pago' => 'PagoController@validarPago',
         'validaciones' => 'PagoController@validaciones',
         'listar_validaciones' => 'PagoController@listarValidaciones',
+        'subir_soporte' => 'PagoController@subirSoporte',
+        'descargar_pago' => 'PagoController@descargarPago',
+        'obtener_documentos' => 'PagoController@obtenerDocumentos',
+        'borrar_imagen' => 'PagoController@borrarImagen',
         // Asistencia
         'asistencia'        => 'AsistenciaController@index',
         'registrar_movimiento' => 'AsistenciaController@registrarMovimiento',
